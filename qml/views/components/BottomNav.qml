@@ -11,11 +11,18 @@ Rectangle {
     color: "#0F1419"
 
     property int currentIndex: 0
+    property bool initialized: false
     signal navigationRequested(int index)
 
-    // Emit signal when index changes
+    Component.onCompleted: {
+        initialized = true
+    }
+
+    // Emit signal when index changes (only after initialization)
     onCurrentIndexChanged: {
-        navigationRequested(currentIndex)
+        if (initialized && currentIndex >= 0) {
+            navigationRequested(currentIndex)
+        }
     }
 
     Row {

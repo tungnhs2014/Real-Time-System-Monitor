@@ -201,6 +201,13 @@ Rectangle {
                 Item {
                     width: 292
                     height: 40
+                    
+                    // Calculate shared max for both charts
+                    property real sharedMax: {
+                        var maxDown = Math.max.apply(null, systemInfo.netDownHistory.length > 0 ? systemInfo.netDownHistory : [0]);
+                        var maxUp = Math.max.apply(null, systemInfo.netUpHistory.length > 0 ? systemInfo.netUpHistory : [0]);
+                        return Math.max(maxDown, maxUp, 10); // Minimum 10
+                    }
 
                     // Download line (behind, orange)
                     LineChart {
@@ -209,15 +216,31 @@ Rectangle {
                         lineColor: "#FF9800"  // Orange for download
                         smoothLine: true
                         lineWidth: 2
+                        showAxisLabels: false
+                        yAxisUnit: "KB/s"
+                        showGrid: true
+                        maxValue: parent.sharedMax
+                        minValue: 0
+                        showValues: true  // Show value!
+                        showLastValueOnly: true  // Only latest
+                        valueFontSize: 8  // Smaller for dual chart
                     }
 
-                    // Upload line (behind, cyan)
+                    // Upload line (front, cyan)
                     LineChart {
                         anchors.fill: parent
                         dataPoints: systemInfo.netUpHistory
-                        lineColor: "#00BCD4"  // Orange for download
+                        lineColor: "#00BCD4"  // Cyan for upload
                         smoothLine: true
                         lineWidth: 2
+                        showAxisLabels: false  // Download chart shows labels
+                        showGrid: false
+                        maxValue: parent.sharedMax
+                        minValue: 0
+                        showValues: true  // Show value!
+                        showLastValueOnly: true  // Only latest
+                        valueFontSize: 8
+                        valueColor: "#00BCD4"  // Match line color
                     }
 
                     // Legend

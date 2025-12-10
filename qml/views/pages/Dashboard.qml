@@ -146,7 +146,7 @@ Rectangle {
             }
         }
 
-        // ==================== GPU CARD ====================
+        // ==================== TEMP CARD (GPU Temperature) ====================
         CardContainer {
             x: 116
             y: 8
@@ -168,7 +168,7 @@ Rectangle {
                         smooth: false
                     }
                     Text {
-                        text: "GPU"
+                        text: "TEMP"
                         font.family: "DejaVu Sans"
                         font.pixelSize: 10
                         font.bold: true
@@ -196,10 +196,10 @@ Rectangle {
 
                         MouseArea {
                             anchors.fill: parent
-                            anchors.margins: -10 
+                            anchors.margins: -10
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                root.navigationRequested(2)  // Navigate to Memory (index 2)
+                                root.navigationRequested(4)  // Navigate to Network Detail (index 4)
                             }
                         }
                     }
@@ -329,7 +329,7 @@ Rectangle {
                         smooth: false
                     }
                     Text {
-                        text: "RAM"
+                        text: "MEMORY"
                         font.family: "DejaVu Sans"
                         font.pixelSize: 10
                         font.bold: true
@@ -358,10 +358,10 @@ Rectangle {
 
                         MouseArea {
                             anchors.fill: parent
-                            anchors.margins: -10 
+                            anchors.margins: -10
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                root.navigationRequested(3)  // Navigate to RAM (index 3)
+                                root.navigationRequested(2)  // Navigate to Memory Detail (index 2)
                             }
                         }
                     }
@@ -439,7 +439,7 @@ Rectangle {
                         smooth: false
                     }
                     Text {
-                        text: "HDD"
+                        text: "STORAGE"
                         font.family: "DejaVu Sans"
                         font.pixelSize: 10
                         font.bold: true
@@ -471,12 +471,12 @@ Rectangle {
 
                             MouseArea {
                                 anchors.fill: parent
-                                anchors.margins: -10 
+                                anchors.margins: -10
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                    root.navigationRequested(4)  // Navigate to Network (index 3)
+                                    root.navigationRequested(3)  // Navigate to Storage Detail (index 3)
+                                }
                             }
-                        }
                         }
 
                         ProgressBar {
@@ -521,7 +521,7 @@ Rectangle {
                             antialiasing: false
                         }
                         Text {
-                            text: "↓" + systemInfo.net
+                            text: "↓" + systemInfo.netDownSpeed
                             font.pixelSize: 7
                             font.bold: true
                             font.family: "DejaVu Sans"
@@ -531,7 +531,7 @@ Rectangle {
                             antialiasing: false
                         }
                         Text {
-                            text: "↑" + systemInfo.netUp
+                            text: "↑" + systemInfo.netUpSpeed
                             font.pixelSize: 7
                             font.bold: true
                             font.family: "DejaVu Sans"

@@ -92,7 +92,14 @@ Rectangle {
                     height: 50
                     dataPoints: systemInfo.tempHistory
                     maxValue: 100
+                    minValue: 0  
                     lineColor: "#FF5722"
+                    showAxisLabels: false
+                    yAxisUnit: "°"
+                    showGrid: true
+                    showValues: true  // Show value labels!
+                    showLastValueOnly: true  // Only latest value
+                    valueFontSize: 9
                 }
             }   
         }

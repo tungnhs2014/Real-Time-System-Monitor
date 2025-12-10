@@ -49,6 +49,11 @@ void NetworkMonitor::update()
     NetStats currentStats = parseNetStats(m_interface);
     qint64 currentTimestamp = QDateTime::currentMSecsSinceEpoch();
 
+    LOG_DEBUG(QString("Network stats for %1: RX=%2 TX=%3")
+              .arg(m_interface)
+              .arg(currentStats.rxBytes)
+              .arg(currentStats.txBytes));
+
     // First call - initialize previous stats
     if (m_prevTimestamp == 0) {
         m_prevStats = currentStats;
@@ -56,6 +61,7 @@ void NetworkMonitor::update()
         m_upSpeed = "0 B/s";
         m_downSpeed = "0 B/s";
         m_packetRate = "0 pps";
+        LOG_INFO("Network monitor initialized, waiting for next update to calculate speed");
         return;
     }
 
@@ -111,9 +117,11 @@ QString NetworkMonitor::detectInterface()
 #ifdef PLATFORM_RASPBERRY_PI
     // Raspberry Pi: eth0 > wlan0
     candidates = {"eth0", "wlan0"};
+    LOG_INFO("Detecting network interface on Raspberry Pi");
 #else
     candidates = {"enp0s3", "enp0s8", "enp3s0", "ens33", "ens160",
                   "wlp2s0", "wlp3s0", "wlan0", "eth0"};
+    LOG_INFO("Detecting network interface on Desktop");
 #endif
 
     // Try priority list first
@@ -122,15 +130,27 @@ QString NetworkMonitor::detectInterface()
         if (FileReader::fileExists(macPath)) {
             // Check if interface has carrier (is up)
             QString carrierPath = QString("/sys/class/net/%1/carrier").arg(iface);
-            QString carrier = FileReader::readFirstLine(carrierPath);
+            QString carrier = FileReader::readFirstLine(carrierPath).trimmed();
             
+            LOG_DEBUG(QString("Interface %1: carrier=%2").arg(iface, carrier));
+            
+            // carrier == "1" means link is up and connected
             if (carrier == "1") {
+                LOG_INFO(QString("Selected interface: %1 (carrier UP)").arg(iface));
+                return iface;
+            }
+            // Also check operstate as fallback
+            QString operstatePath = QString("/sys/class/net/%1/operstate").arg(iface);
+            QString operstate = FileReader::readFirstLine(operstatePath).trimmed();
+            if (operstate == "up" || operstate == "unknown") {
+                LOG_INFO(QString("Selected interface: %1 (operstate=%2)").arg(iface, operstate));
                 return iface;
             }
         }
     }
 
     // Fallback: scan /proc/net/dev
+    LOG_DEBUG("No interface with carrier=1 found, scanning /proc/net/dev");
     QStringList lines = FileReader::readLines(App::Path::PROC_NET_DEV);
 
     for (int i = 2; i < lines.size(); i++) { // Skip 2 header lines
@@ -141,6 +161,7 @@ QString NetworkMonitor::detectInterface()
             QString iface = line.left(colonPos).trimmed();
 
             if (iface != "lo") {
+                LOG_INFO(QString("Selected interface from /proc/net/dev: %1").arg(iface));
                 return iface;
             }
         }
@@ -149,6 +170,7 @@ QString NetworkMonitor::detectInterface()
     LOG_WARNING("No network interface detected");    
     
 #ifdef PLATFORM_RASPBERRY_PI
+    LOG_WARNING("Using fallback interface: eth0");
     return "eth0"; // Default fallback for Pi
 #else
     return "enp0s3"; // Default fallback for Ubuntu
@@ -205,18 +227,28 @@ NetworkMonitor::NetStats NetworkMonitor::parseNetStats(const QString &interface)
     NetStats stats;
     
     if (interface.isEmpty()) {
+        LOG_WARNING("parseNetStats: interface is empty");
         return stats;
     }
     
     QStringList lines = FileReader::readLines(App::Path::PROC_NET_DEV);
+    
+    LOG_DEBUG(QString("parseNetStats: reading /proc/net/dev, %1 lines").arg(lines.size()));
 
     for (const QString& line : lines) {
         if (line.contains(interface + ":")) {
+            LOG_DEBUG(QString("Found interface line: %1").arg(line));
+            
             int colonPos = line.indexOf(':');
 
             if (colonPos > 0) {
                 QString values = line.mid(colonPos + 1);
                 QStringList parts = values.split(' ', Qt::SkipEmptyParts);
+
+                LOG_DEBUG(QString("Split into %1 parts").arg(parts.size()));
+                if (parts.size() >= 10) {
+                    LOG_DEBUG(QString("Parts[0]=%1 Parts[8]=%2").arg(parts[0], parts[8]));
+                }
 
                 // Index: 0=rxBytes, 1=rxPackets, 8=txBytes, 9=txPackets
                 if (parts.size() >= 10) {
@@ -224,10 +256,18 @@ NetworkMonitor::NetStats NetworkMonitor::parseNetStats(const QString &interface)
                     stats.rxPackets = parts[1].toULongLong();
                     stats.txBytes = parts[8].toULongLong();
                     stats.txPackets = parts[9].toULongLong();
+                    
+                    LOG_DEBUG(QString("Parsed: RX=%1 TX=%2").arg(stats.rxBytes).arg(stats.txBytes));
+                } else {
+                    LOG_WARNING(QString("Not enough parts: %1 (need 10)").arg(parts.size()));
                 }
             }
             break;
         }
+    }
+    
+    if (stats.rxBytes == 0 && stats.txBytes == 0) {
+        LOG_WARNING(QString("parseNetStats: No data found for %1").arg(interface));
     }
     
     return stats;

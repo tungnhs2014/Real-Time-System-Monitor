@@ -32,6 +32,17 @@ Item {
     property bool showGrid: false               // Show background grid
     property color gridColor: Qt.rgba(1, 1, 1, 0.05)
     property int gridLines: 4                   // Number of horizontal grid lines
+    
+    // Axis labels (NEW)
+    property bool showAxisLabels: true          // Show min/max Y-axis labels
+    property string yAxisUnit: ""               // Unit for Y-axis (e.g. "°C", "MB/s")
+    property color labelColor: Qt.rgba(1, 1, 1, 0.6)  // Label text color
+    
+    // Value labels on line (NEW)
+    property bool showValues: false             // Show value labels on data points
+    property bool showLastValueOnly: true       // Only show last value (vs all values)
+    property int valueFontSize: 9               // Font size for value labels
+    property color valueColor: "#FFFFFF"        // Value label color
 
     // ==================== PRIVATE PROPERTIES ====================
 
@@ -230,6 +241,103 @@ Item {
     
     onMaxValueChanged: {
         chartCanvas.requestPaint();
+    }
+
+    // ==================== VALUE LABELS ON LINE ====================
+    
+    Repeater {
+        model: root.showValues ? root.dataPoints : []
+        
+        Rectangle {
+            visible: root.showLastValueOnly ? (index === root.dataPoints.length - 1) : true
+            
+            // Calculate position
+            property real xPos: {
+                if (root.dataPoints.length === 0) return 0;
+                var spacing = root.width / Math.max(root.dataPoints.length - 1, 1);
+                return index * spacing;
+            }
+            
+            property real yPos: {
+                if (root.dataPoints.length === 0) return root.height / 2;
+                var range = root._effectiveMax - root._effectiveMin;
+                if (range === 0) return root.height / 2;
+                var normalized = (modelData - root._effectiveMin) / range;
+                return root.height - (normalized * root.height);
+            }
+            
+            x: xPos - width / 2
+            y: yPos - height - 3  // 3px above the point
+            
+            width: valueText.width + 4
+            height: valueText.height + 2
+            color: "#000000"
+            opacity: 0.8
+            radius: 2
+            
+            Text {
+                id: valueText
+                anchors.centerIn: parent
+                text: Math.round(modelData) + root.yAxisUnit
+                font.family: "DejaVu Sans"
+                font.pixelSize: root.valueFontSize
+                font.bold: true
+                color: root.valueColor
+                renderType: Text.NativeRendering
+            }
+        }
+    }
+
+    // ==================== Y-AXIS LABELS ====================
+    
+    // Max value label (top right) with background
+    Rectangle {
+        visible: root.showAxisLabels && root.dataPoints.length > 0
+        anchors.right: parent.right
+        anchors.rightMargin: 2
+        anchors.top: parent.top
+        anchors.topMargin: 1
+        width: maxLabel.width + 4
+        height: maxLabel.height + 2
+        color: "#1E1E1E"
+        opacity: 0.7
+        radius: 2
+        
+        Text {
+            id: maxLabel
+            anchors.centerIn: parent
+            text: Math.round(root._effectiveMax) + root.yAxisUnit
+            font.family: "DejaVu Sans"
+            font.pixelSize: 9
+            font.bold: true
+            color: root.labelColor
+            renderType: Text.NativeRendering
+        }
+    }
+    
+    // Min value label (bottom right) with background
+    Rectangle {
+        visible: root.showAxisLabels && root.dataPoints.length > 0
+        anchors.right: parent.right
+        anchors.rightMargin: 2
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 1
+        width: minLabel.width + 4
+        height: minLabel.height + 2
+        color: "#1E1E1E"
+        opacity: 0.7
+        radius: 2
+        
+        Text {
+            id: minLabel
+            anchors.centerIn: parent
+            text: Math.round(root._effectiveMin) + root.yAxisUnit
+            font.family: "DejaVu Sans"
+            font.pixelSize: 9
+            font.bold: true
+            color: root.labelColor
+            renderType: Text.NativeRendering
+        }
     }
 
     // ==================== INITIALIZATION ====================

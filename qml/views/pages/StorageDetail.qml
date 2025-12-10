@@ -142,6 +142,12 @@ Rectangle {
                         dataPoints: systemInfo.ioHistory
                         lineColor: "#FFEB3B"  // Yellow for I/O
                         smoothLine: true
+                        showAxisLabels: false
+                        yAxisUnit: "MB/s"
+                        showGrid: false
+                        showValues: true  // Show value!
+                        showLastValueOnly: true
+                        valueFontSize: 8
                     }
                 }
             }

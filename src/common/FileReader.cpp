@@ -46,15 +46,30 @@ QStringList FileReader::readLines(const QString &path)
     QFile file(path);
 
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qWarning() << "FileReader::readLines: Failed to open" << path 
+                   << "Error:" << file.errorString();
         return lines;
     }
 
-    QTextStream stream(&file);
-    while (!stream.atEnd()) {
-        lines.append(stream.readLine());
-    }
-
+    // For /proc files, readAll() works better than QTextStream line-by-line
+    // because /proc is a virtual filesystem with special behavior
+    QByteArray data = file.readAll();
     file.close();
+    
+    if (data.isEmpty()) {
+        qWarning() << "FileReader::readLines:" << path << "returned 0 bytes (file empty or read error)";
+        return lines;
+    }
+    
+    // Convert to QString and split by newlines
+    QString content = QString::fromUtf8(data);
+    lines = content.split('\n', Qt::KeepEmptyParts);
+    
+    // Remove trailing empty line if exists
+    if (!lines.isEmpty() && lines.last().isEmpty()) {
+        lines.removeLast();
+    }
+    
     return lines;
 }
 

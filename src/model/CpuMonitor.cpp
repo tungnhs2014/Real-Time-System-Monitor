@@ -134,6 +134,9 @@ void CpuMonitor::updateTempHistory(int temp)
     while (m_tempHistory.size() > MAX_TEMP_HISTORY) {
         m_tempHistory.removeFirst();
     }
+    
+    LOG_DEBUG(QString("Temperature history updated: temp=%1°C, size=%2")
+              .arg(temp).arg(m_tempHistory.size()));
 }
 
 QVariantList CpuMonitor::getTempHistory() const
@@ -214,13 +217,17 @@ CpuMonitor::CoreStats CpuMonitor::readCoreStats(int coreNum)
         return stats;
     }
 
-    QTextStream stream(&file);
+    // Read entire file at once (fixes /proc filesystem issue)
+    QByteArray data = file.readAll();
+    file.close();
+    
+    QString content = QString::fromUtf8(data);
+    QStringList lines = content.split('\n', Qt::SkipEmptyParts);
+    
     QString searchStr = QString("cpu%1 ").arg(coreNum);
 
     // Search for the line starting with "cpu0 ", "cpu1 ", etc.
-    while (!stream.atEnd()) {
-        QString line = stream.readLine();
-
+    for (const QString &line : lines) {
         if (line.startsWith(searchStr)) {
             QStringList parts = line.split(' ', Qt::SkipEmptyParts);
 
@@ -237,7 +244,6 @@ CpuMonitor::CoreStats CpuMonitor::readCoreStats(int coreNum)
         }
     }
 
-    file.close();
     return stats;
 }
 

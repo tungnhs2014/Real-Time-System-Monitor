@@ -7,7 +7,6 @@
 
 import QtQuick 2.15
 import "../components"
-import ".." as Root
 
 Rectangle {
     id: root
@@ -21,27 +20,7 @@ Rectangle {
     // ==================== SIGNALS FOR NAVIGATION ====================
     signal backRequested()
     signal settingsRequested()
-
-    property string mockHostname: "raspberrypi"
-    property string mockOsVersion: "Raspberry Pi OS"
-    property string mockKernel: "Linux 5.10.103"
-    property string mockUptime: "3d 4h 15m 30s"
-    property string mockSystemTime: "03:00:48 [NTP]"
-
-    property int mockUpdateInterval: 2
-    property bool mockSoundAlert: false
-
-    property int mockCpuWarn: 70
-    property int mockCpuCrit: 90
-    property int mockRamWarn: 75
-
-    property var mockLogs: [
-        {time: "03:00:45", level: "INFO", message: "System monitor started"},
-        {time: "03:00:46", level: "INFO", message: "Network connected: eth0"},
-        {time: "03:00:48", level: "WARN", message: "High CPU temperature: 85°C"},
-        {time: "03:00:50", level: "ERROR", message: "Storage 95% full - cleanup needed"},
-        {time: "03:00:52", level: "INFO", message: "Settings loaded successfully"}
-    ]
+    signal navigationRequested(int index)
 
     // ==================== HEADER ====================
     DetailHeader {
@@ -443,7 +422,12 @@ Rectangle {
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        currentIndex: 0
+        currentIndex: -1  // No tab selected in settings
+
+        // Forward navigation signal to Main.qml
+        onNavigationRequested: function(index) {
+            root.navigationRequested(index)
+        }
     }
 
     // ==================== HELPER COMPONENTS ====================
