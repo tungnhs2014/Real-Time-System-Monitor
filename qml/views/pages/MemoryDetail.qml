@@ -22,15 +22,6 @@ Rectangle {
     signal settingsRequested()
     signal navigationRequested(int index)
 
-    // ==================== MOCK DATA ====================
-    // TODO: Replace with systemInfo.xxx when backend ready
-    
-    property int mockRamUsage: 73            // RAM usage percentage
-    property string mockRamUsed: "410MB"     // RAM used
-    property string mockRamTotal: "485MB"    // Total RAM
-    property string mockRamFree: "75MB"      // Free RAM
-    property string mockCache: "80MB"        // Cache size
-    
     // ==================== HEADER ====================
     
     DetailHeader {
@@ -227,7 +218,7 @@ Rectangle {
                 
                 // Used memory text
                 Text {
-                    text: "Used: " + systemInfo.ramUsed + " / " + root.mockRamTotal
+                    text: "Used: " + systemInfo.ramUsed + " / " + (systemInfo.ramTotal >= 1024 ? (systemInfo.ramTotal / 1024).toFixed(1) + "G" : systemInfo.ramTotal + "M")
                     font.family: "DejaVu Sans"
                     font.pixelSize: 10
                     color: "#FFFFFF"

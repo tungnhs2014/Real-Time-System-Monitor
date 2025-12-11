@@ -8,7 +8,6 @@
 
 import QtQuick 2.15
 import "../components"
-import ".." as Root
 
 Rectangle {
     id: root
@@ -23,33 +22,6 @@ Rectangle {
     signal backRequested()
     signal settingsRequested()
     signal navigationRequested(int index)
-
-    // ==================== MOCK DATA ====================
-
-    property string mockInterface: "eth0"
-    property string mockIpAddress: "192.168.40.31"
-    property string mockMacAddress: "b8:27:eb:xx:xx:xx"
-
-    // Current speeds
-    property string mockUpSpeed: "0.0 Bps"
-    property string mockDownSpeed: "0.0 Bps"
-
-    // Historical data (30 points for 60 seconds at 2s interval)
-    property var mockUpHistory: [
-        5, 8, 6, 10, 7, 9, 8, 11, 9, 12,
-        10, 13, 11, 14, 12, 15, 13, 16, 14, 17,
-        15, 14, 13, 12, 11, 10, 9, 8, 7, 6
-    ]
-
-    property var mockDownHistory: [
-        15, 20, 18, 25, 22, 27, 24, 30, 26, 32,
-        28, 35, 30, 38, 33, 40, 35, 42, 37, 45,
-        40, 38, 35, 32, 30, 28, 25, 22, 20, 18
-    ]
-
-    // Network stats
-    property string mockPacketRate: "0 pps"
-    property int mockActiveConnections: 7
 
     // ==================== DEBUG ====================
     Component.onCompleted: {

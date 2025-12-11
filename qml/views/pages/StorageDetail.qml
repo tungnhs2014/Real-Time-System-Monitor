@@ -21,31 +21,6 @@ Rectangle {
     signal settingsRequested()
     signal navigationRequested(int index)
 
-    // ==================== MOCK DATA ====================
-
-    // Root partition
-    property string mockRootName: "Root Partition"
-    property string mockRootTotal: "85.1 GB"
-    property int mockRootUsage: 95
-    property string mockRootUsed: "80.8 GB"
-    property string mockRootFree: "4.3 GB"
-
-    // Swap partition
-    property string mockSwapName: "Swap Partition"
-    property string mockSwapTotal: "100 MB"
-    property int mockSwapUsage: 0
-    property string mockSwapUsed: "0 MB"
-    property string mockSwapFree: "100 MB"
-
-    // I/O statistics
-    property string mockReadSpeed: "0.0 MB/s"
-    property string mockWriteSpeed: "0.0 MB/s"
-    property var mockIoHistory: [
-        10, 15, 12, 18, 14, 20, 16, 22, 18, 25,
-        20, 23, 19, 24, 21, 26, 22, 28, 24, 30,
-        25, 29, 26, 31, 27, 32, 28, 30, 26, 28
-    ]
-
     // ==================== HEADER ====================
 
     DetailHeader {
@@ -90,7 +65,7 @@ Rectangle {
 
             PartitionBar {
                 width: 304
-                partitionName: root.mockRootName
+                partitionName: "Root Partition"
                 totalSize: systemInfo.hddTotal
                 usage: systemInfo.hddUsage
                 usedSize: systemInfo.hddUsed
@@ -101,7 +76,7 @@ Rectangle {
 
             PartitionBar {
                 width: 304
-                partitionName: root.mockSwapName
+                partitionName: "Swap Partition"
                 totalSize: systemInfo.swapTotal
                 usage: systemInfo.swapUsage
                 usedSize: systemInfo.swapUsed

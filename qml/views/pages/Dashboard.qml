@@ -146,7 +146,7 @@ Rectangle {
             }
         }
 
-        // ==================== TEMP CARD (GPU Temperature) ====================
+        // ==================== GPU CARD ====================
         CardContainer {
             x: 116
             y: 8
@@ -168,7 +168,7 @@ Rectangle {
                         smooth: false
                     }
                     Text {
-                        text: "TEMP"
+                        text: "GPU"
                         font.family: "DejaVu Sans"
                         font.pixelSize: 10
                         font.bold: true
