@@ -1,0 +1,99 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "brcm,bcm2837", "brcm,bcm2710";
+
+    /* Fragment 0: Configure SPI0 and devices */
+    fragment@0 {
+        target = <&spi0>;
+        __overlay__ {
+            status = "okay";
+            #address-cells = <1>;
+            #size-cells = <0>;
+
+            /* Disable default spidev */
+            spidev@0 {
+                status = "disabled";
+            };
+
+            spidev@1 {
+                status = "disabled";
+            };
+
+            /* ILI9341 Display on SPI0.0 (CE0) */
+            ili9341: ili9341@0 {
+                compatible = "ilitek,ili9341";
+                reg = <0>;
+                
+                spi-max-frequency = <32000000>;
+                
+                /* GPIO pins */
+                dc-gpios = <&gpio 24 0>;
+                reset-gpios = <&gpio 25 0>;
+                led-gpios = <&gpio 18 0>;
+                
+                /* Display settings */
+                rotation = <90>;
+                fps = <30>;
+                
+                status = "okay";
+            };
+
+            /* XPT2046 Touch on SPI0.1 (CE1) */
+            xpt2046: xpt2046@1 {
+                compatible = "xptek,xpt2046";
+                reg = <1>;
+
+                /* SPI configuration */
+                spi-max-frequency = <2000000>;
+
+                /* Interrupt configuration - FIXED for interrupt storm */
+                interrupt-parent = <&gpio>;
+                interrupts = <17 1>;         /* 1 = IRQ_TYPE_EDGE_RISING (changed from 2=FALLING) */
+                pendown-gpios = <&gpio 17 0>; /* 0 = GPIO_ACTIVE_HIGH (changed from 1=LOW) */
+                
+                /* Calibration - 12-bit ADC range */
+                ti,x-min = /bits/ 16 <200>;
+                ti,x-max = /bits/ 16 <3900>;
+                ti,y-min = /bits/ 16 <200>;
+                ti,y-max = /bits/ 16 <3900>;
+                ti,pressure-min = /bits/ 16 <30>;
+                ti,pressure-max = /bits/ 16 <255>;
+                
+                /* Touch configuration flags */
+                ti,swap-xy;           /* Swap X and Y for landscape */
+                ti,invert-x;          /* Uncomment if X is inverted */
+                ti,invert-y;          /* Uncomment if Y is inverted */
+                
+                status = "okay";
+            };
+        };
+    };
+
+    /* Fragment 1: GPIO pin configuration */
+    fragment@1 {
+        target = <&gpio>;
+        __overlay__ {
+            ili9341_pins: ili9341_pins {
+                brcm,pins = <24 25 18>;
+                brcm,function = <1 1 1>;  
+                brcm,pull = <0 0 0>;     
+            };
+            
+            xpt2046_pins: xpt2046_pins {
+                brcm,pins = <17>;
+                brcm,function = <0>;      /* Input */
+                brcm,pull = <2>;          /* 2 = Pull-UP (keep same, but try stronger) */
+            };
+        };
+    };
+
+    /* Runtime parameters override */
+    __overrides__ {
+        speed = <&ili9341>,"spi-max-frequency:0";
+        rotation = <&ili9341>,"rotation:0";
+        fps = <&ili9341>,"fps:0";
+        touch_speed = <&xpt2046>,"spi-max-frequency:0";
+    };
+};
