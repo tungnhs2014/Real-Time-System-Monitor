@@ -1,0 +1,29 @@
+From 1234567890abcdef1234567890abcdef12345678 Mon Sep 17 00:00:00 2001
+From: TungNHS <tungnhs@gmail.com>
+Date: Mon, 28 Oct 2024 10:00:00 +0700
+Subject: [PATCH] fbdev: export fb_deferred_io_mmap
+
+Export fb_deferred_io_mmap symbol to allow external framebuffer
+drivers to use deferred I/O mechanism.
+
+Required for ILI9341 display driver.
+
+Signed-off-by: TungNHS <tungnhs@gmail.com>
+---
+ drivers/video/fbdev/core/fb_defio.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/video/fbdev/core/fb_defio.c b/drivers/video/fbdev/core/fb_defio.c
+index 1ae1d35..9a8e555 100644
+--- a/drivers/video/fbdev/core/fb_defio.c
++++ b/drivers/video/fbdev/core/fb_defio.c
+@@ -155,6 +155,7 @@ int fb_deferred_io_mmap(struct fb_info *info, struct vm_area_struct *vma)
+ 	vma->vm_ops = &fb_deferred_io_vm_ops;
+ 	return 0;
+ }
++EXPORT_SYMBOL_GPL(fb_deferred_io_mmap);
+ 
+ /* workqueue callback */
+ static void fb_deferred_io_work(struct work_struct *work)
+-- 
+2.34.1
