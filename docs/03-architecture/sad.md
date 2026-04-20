@@ -1,7 +1,9 @@
 # System Architecture Document (SAD)
 
 ## Scope
-This SAD describes the selected brownfield target architecture for the System Monitor repository.
+This SAD describes the repository-level architecture for the brownfield System Monitor product.
+
+It is architecture-facing, not implementation-complete. For current runtime truth, see `docs/03-architecture/as-is-architecture.md`.
 
 ## System Context
 The product combines:
@@ -27,11 +29,19 @@ The product combines:
 - `SystemController` remains the primary aggregation facade for QML
 - monitor-specific logic remains in model classes
 - display and touch remain delivered through the BSP layer
+- main page flow remains primarily in `app/qml/Main.qml`
+- `NavigationController` is present but is not the dominant runtime navigation path
 
-## Target Architecture Direction
+## Transition Architecture Direction
 - keep one monorepo
 - keep the current app functional while documentation and structure are normalized
-- evolve toward clearer separation of product-layer packaging and BSP concerns
+- document `as-is`, `transition`, and `target` separately
+- evolve toward clearer separation of product-layer packaging and BSP concerns without forcing a full runtime rewrite first
+
+## Target Architecture Direction
+- keep app, BSP, and product packaging zones explicit
+- complete a reviewable product-side packaging path
+- allow runtime modularization to happen incrementally only after the current brownfield truth is fully documented
 
 ## Major Relationships
 - the app consumes Linux runtime information and renders the UI
@@ -44,6 +54,7 @@ The repository also contains supporting assets that are important for engineerin
 - `private-docs/ai/`
 
 ## Supporting Views
+- `docs/03-architecture/as-is-architecture.md`
 - `docs/03-architecture/diagrams/runtime-component-diagram.md`
 - `docs/03-architecture/diagrams/packaging-and-deployment-diagram.md`
 - `docs/03-architecture/diagrams/use-case-diagram.md`

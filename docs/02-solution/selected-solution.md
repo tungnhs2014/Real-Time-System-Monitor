@@ -25,6 +25,19 @@ It does not claim that the runtime application internals have already been fully
 - active BSP integration is implemented and now lives under `yocto/meta-rpi-ili9341-bsp/`
 - product-side Yocto layer exists as scaffold only
 - public docs are being normalized around design workflow
+- `SystemController` is still the primary runtime aggregation facade
+- page flow is still driven mainly from `app/qml/Main.qml`
+- `NavigationController` exists but is not yet the main navigation path
+
+## Transition State
+
+This brownfield effort is intentionally using a transition architecture rather than pretending the target state already exists.
+
+Transition rules:
+- preserve working runtime and BSP behavior while documentation is corrected
+- add `as-is` and migration artifacts before broad refactoring
+- keep the repo split between app, BSP, product layer, docs, and private AI rules stable
+- correct diagrams and architecture docs so they describe the current source honestly
 
 ## Target State
 - README is short and routes readers into `docs/`
@@ -32,8 +45,10 @@ It does not claim that the runtime application internals have already been fully
 - diagrams are versioned as text files
 - ADRs capture major decisions instead of burying them in prose
 - runtime architecture can evolve incrementally instead of requiring a disruptive rewrite first
+- product-side packaging can mature without collapsing BSP and product concerns back together
 
 ## Migration Consequences
 - old path names should no longer be used in docs
 - review and onboarding should start from `docs/00-start-here.md`
 - current implementation and future phases must be documented separately
+- backend-exposed properties must not be mistaken for fully completed UI workflows unless the current pages actually implement them
