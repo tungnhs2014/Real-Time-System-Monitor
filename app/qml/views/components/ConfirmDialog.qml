@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
 import QtQuick 2.15
 
 Rectangle {
@@ -14,6 +17,8 @@ Rectangle {
     property string confirmText: "Confirm"
     property string cancelText: "Cancel"
     property color confirmColor: "#F44336"
+    property double lastActionMs: 0
+    property bool confirmArmed: false
 
     // Signals
     signal accepted()
@@ -21,20 +26,52 @@ Rectangle {
 
     // Show/hide methods
     function show() {
+        lastActionMs = 0
+        confirmArmed = false
         visible = true
+        confirmArmTimer.restart()
     }
 
     function hide() {
+        confirmArmTimer.stop()
+        confirmArmed = false
         visible = false
     }
 
-    // Close on background click
+    function triggerReject() {
+        var now = Date.now()
+        if (now - lastActionMs < 200) {
+            return
+        }
+        lastActionMs = now
+        hide()
+        rejected()
+    }
+
+    function triggerAccept() {
+        if (!confirmArmed) {
+            return
+        }
+
+        var now = Date.now()
+        if (now - lastActionMs < 200) {
+            return
+        }
+        lastActionMs = now
+        hide()
+        accepted()
+    }
+
+    Timer {
+        id: confirmArmTimer
+        interval: 350
+        repeat: false
+        onTriggered: root.confirmArmed = true
+    }
+
     MouseArea {
         anchors.fill: parent
-        onClicked: {
-            root.hide()
-            root.rejected()
-        }
+        preventStealing: true
     }
 
     // Dialog box
@@ -51,6 +88,7 @@ Rectangle {
         // Prevent click through
         MouseArea {
             anchors.fill: parent
+            preventStealing: true
             onClicked: { } // Consume click
         }
 
@@ -119,10 +157,8 @@ Rectangle {
                     MouseArea {
                         id: cancelArea
                         anchors.fill: parent
-                        onClicked: {
-                            root.hide()
-                            root.rejected()
-                        }
+                        preventStealing: true
+                        onClicked: root.triggerReject()
                     }
                 }
 
@@ -132,6 +168,7 @@ Rectangle {
                     height: 32
                     radius: 4
                     color: confirmArea.pressed ? Qt.darker(root.confirmColor, 1.2) : root.confirmColor
+                    opacity: root.confirmArmed ? 1.0 : 0.55
 
                     Text {
                         anchors.centerIn: parent
@@ -147,10 +184,9 @@ Rectangle {
                     MouseArea {
                         id: confirmArea
                         anchors.fill: parent
-                        onClicked: {
-                            root.hide()
-                            root.accepted()
-                        }
+                        enabled: root.confirmArmed
+                        preventStealing: true
+                        onClicked: root.triggerAccept()
                     }
                 }
             }

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
 #include "SystemController.h"
 
 #include "SettingsManager.h"
@@ -55,6 +58,8 @@ SystemController::SystemController(QObject* parent)
     , m_cpuWarnThreshold(App::Threshold::CPU_WARNING)
     , m_cpuCritThreshold(App::Threshold::CPU_CRITICAL)
     , m_ramWarnThreshold(App::Threshold::RAM_WARNING)
+    , m_lastCpuWarningLevel(0)
+    , m_lastRamWarningLevel(0)
 {
     initializeServices();
     connectSignals();
@@ -113,187 +118,96 @@ void SystemController::updateAllMetrics()
     const SystemMetricsSnapshot snapshot = m_metricsService->collectSnapshot();
     applySnapshot(snapshot);
 
-    m_uptime = m_settingsManager->uptime();
-    emit uptimeChanged();
+    const QString uptime = m_settingsManager->uptime();
+    if (m_uptime != uptime) {
+        m_uptime = uptime;
+        emit uptimeChanged();
+    }
 
-    m_systemTime = m_settingsManager->systemTime();
-    emit systemTimeChanged();
+    const QString systemTime = m_settingsManager->systemTime();
+    if (m_systemTime != systemTime) {
+        m_systemTime = systemTime;
+        emit systemTimeChanged();
+    }
 
     checkThresholds();
 }
 
 void SystemController::applySnapshot(const SystemMetricsSnapshot& snapshot)
 {
-    if (m_cpuUsage != snapshot.cpu.usage) {
-        m_cpuUsage = snapshot.cpu.usage;
-        emit cpuUsageChanged();
-    }
+    const auto updateValue = [this](auto& field, const auto& value, auto notify) {
+        if (field != value) {
+            field = value;
+            (this->*notify)();
+        }
+    };
 
-    if (m_cpuTemp != snapshot.cpu.temperature) {
-        m_cpuTemp = snapshot.cpu.temperature;
-        emit cpuTempChanged();
-    }
+    updateValue(m_cpuUsage, snapshot.cpu.usage, &SystemController::cpuUsageChanged);
+    updateValue(m_cpuTemp, snapshot.cpu.temperature, &SystemController::cpuTempChanged);
+    updateValue(m_cpuClock, snapshot.cpu.clock, &SystemController::cpuClockChanged);
+    updateValue(m_coreUsages, snapshot.cpu.coreUsages, &SystemController::coreUsagesChanged);
+    updateValue(m_tempHistory, snapshot.cpu.temperatureHistory, &SystemController::tempHistoryChanged);
+    updateValue(m_loadAverage, snapshot.cpu.loadAverage, &SystemController::loadAverageChanged);
 
-    if (m_cpuClock != snapshot.cpu.clock) {
-        m_cpuClock = snapshot.cpu.clock;
-        emit cpuClockChanged();
-    }
+    updateValue(m_gpuTemp, snapshot.gpu.temperature, &SystemController::gpuTempChanged);
+    updateValue(m_gpuMemUsage, snapshot.gpu.memoryUsage, &SystemController::gpuMemUsageChanged);
+    updateValue(m_gpuUsage, snapshot.gpu.usage, &SystemController::gpuUsageChanged);
 
-    m_coreUsages = snapshot.cpu.coreUsages;
-    emit coreUsagesChanged();
+    updateValue(m_ramUsage, snapshot.memory.usage, &SystemController::ramUsageChanged);
+    updateValue(m_ramUsed, snapshot.memory.used, &SystemController::ramUsedChanged);
+    updateValue(m_ramFree, snapshot.memory.free, &SystemController::ramFreeChanged);
+    updateValue(m_ramCache, snapshot.memory.cache, &SystemController::ramCacheChanged);
+    updateValue(m_ramTotal, snapshot.memory.total, &SystemController::ramTotalChanged);
 
-    m_tempHistory = snapshot.cpu.temperatureHistory;
-    emit tempHistoryChanged();
+    updateValue(m_hddUsage, snapshot.storage.usage, &SystemController::hddUsageChanged);
+    updateValue(m_hddTemp, snapshot.storage.temperature, &SystemController::hddTempChanged);
+    updateValue(m_hddTotal, snapshot.storage.total, &SystemController::hddTotalChanged);
+    updateValue(m_hddUsed, snapshot.storage.used, &SystemController::hddUsedChanged);
+    updateValue(m_hddFree, snapshot.storage.free, &SystemController::hddFreeChanged);
+    updateValue(m_swapUsage, snapshot.storage.swapUsage, &SystemController::swapUsageChanged);
+    updateValue(m_swapTotal, snapshot.storage.swapTotal, &SystemController::swapTotalChanged);
+    updateValue(m_swapUsed, snapshot.storage.swapUsed, &SystemController::swapUsedChanged);
+    updateValue(m_swapFree, snapshot.storage.swapFree, &SystemController::swapFreeChanged);
+    updateValue(m_ioRead, snapshot.storage.ioRead, &SystemController::ioReadChanged);
+    updateValue(m_ioWrite, snapshot.storage.ioWrite, &SystemController::ioWriteChanged);
+    updateValue(m_ioHistory, snapshot.storage.ioHistory, &SystemController::ioHistoryChanged);
 
-    if (m_loadAverage != snapshot.cpu.loadAverage) {
-        m_loadAverage = snapshot.cpu.loadAverage;
-        emit loadAverageChanged();
-    }
-
-    if (m_gpuTemp != snapshot.gpu.temperature) {
-        m_gpuTemp = snapshot.gpu.temperature;
-        emit gpuTempChanged();
-    }
-
-    if (m_gpuMemUsage != snapshot.gpu.memoryUsage) {
-        m_gpuMemUsage = snapshot.gpu.memoryUsage;
-        emit gpuMemUsageChanged();
-    }
-
-    if (m_gpuUsage != snapshot.gpu.usage) {
-        m_gpuUsage = snapshot.gpu.usage;
-        emit gpuUsageChanged();
-    }
-
-    if (m_ramUsage != snapshot.memory.usage) {
-        m_ramUsage = snapshot.memory.usage;
-        emit ramUsageChanged();
-    }
-
-    if (m_ramUsed != snapshot.memory.used) {
-        m_ramUsed = snapshot.memory.used;
-        emit ramUsedChanged();
-    }
-
-    if (m_ramFree != snapshot.memory.free) {
-        m_ramFree = snapshot.memory.free;
-        emit ramFreeChanged();
-    }
-
-    if (m_ramCache != snapshot.memory.cache) {
-        m_ramCache = snapshot.memory.cache;
-        emit ramCacheChanged();
-    }
-
-    if (m_ramTotal != snapshot.memory.total) {
-        m_ramTotal = snapshot.memory.total;
-        emit ramTotalChanged();
-    }
-
-    if (m_hddUsage != snapshot.storage.usage) {
-        m_hddUsage = snapshot.storage.usage;
-        emit hddUsageChanged();
-    }
-
-    if (m_hddTemp != snapshot.storage.temperature) {
-        m_hddTemp = snapshot.storage.temperature;
-        emit hddTempChanged();
-    }
-
-    if (m_hddTotal != snapshot.storage.total) {
-        m_hddTotal = snapshot.storage.total;
-        emit hddTotalChanged();
-    }
-
-    if (m_hddUsed != snapshot.storage.used) {
-        m_hddUsed = snapshot.storage.used;
-        emit hddUsedChanged();
-    }
-
-    if (m_hddFree != snapshot.storage.free) {
-        m_hddFree = snapshot.storage.free;
-        emit hddFreeChanged();
-    }
-
-    if (m_swapUsage != snapshot.storage.swapUsage) {
-        m_swapUsage = snapshot.storage.swapUsage;
-        emit swapUsageChanged();
-    }
-
-    m_swapTotal = snapshot.storage.swapTotal;
-    emit swapTotalChanged();
-
-    m_swapUsed = snapshot.storage.swapUsed;
-    emit swapUsedChanged();
-
-    m_swapFree = snapshot.storage.swapFree;
-    emit swapFreeChanged();
-
-    m_ioRead = snapshot.storage.ioRead;
-    emit ioReadChanged();
-
-    m_ioWrite = snapshot.storage.ioWrite;
-    emit ioWriteChanged();
-
-    m_ioHistory = snapshot.storage.ioHistory;
-    emit ioHistoryChanged();
-
-    m_networkInterface = snapshot.network.interfaceName;
-    emit networkInterfaceChanged();
-
-    m_ipAddress = snapshot.network.ipAddress;
-    emit ipAddressChanged();
-
-    m_macAddress = snapshot.network.macAddress;
-    emit macAddressChanged();
-
-    m_netUpSpeed = snapshot.network.uploadSpeed;
-    emit netUpSpeedChanged();
-
-    m_netDownSpeed = snapshot.network.downloadSpeed;
-    emit netDownSpeedChanged();
-
-    m_packetRate = snapshot.network.packetRate;
-    emit packetRateChanged();
-
-    m_activeConnections = snapshot.network.activeConnections;
-    emit activeConnectionsChanged();
-
-    m_netUpHistory = snapshot.network.uploadHistory;
-    emit netUpHistoryChanged();
-
-    m_netDownHistory = snapshot.network.downloadHistory;
-    emit netDownHistoryChanged();
+    updateValue(m_networkInterface, snapshot.network.interfaceName, &SystemController::networkInterfaceChanged);
+    updateValue(m_ipAddress, snapshot.network.ipAddress, &SystemController::ipAddressChanged);
+    updateValue(m_macAddress, snapshot.network.macAddress, &SystemController::macAddressChanged);
+    updateValue(m_netUpSpeed, snapshot.network.uploadSpeed, &SystemController::netUpSpeedChanged);
+    updateValue(m_netDownSpeed, snapshot.network.downloadSpeed, &SystemController::netDownSpeedChanged);
+    updateValue(m_packetRate, snapshot.network.packetRate, &SystemController::packetRateChanged);
+    updateValue(m_activeConnections, snapshot.network.activeConnections, &SystemController::activeConnectionsChanged);
+    updateValue(m_netUpHistory, snapshot.network.uploadHistory, &SystemController::netUpHistoryChanged);
+    updateValue(m_netDownHistory, snapshot.network.downloadHistory, &SystemController::netDownHistoryChanged);
 }
 
 void SystemController::checkThresholds()
 {
-    static int lastCpuWarningLevel = 0;
-    static int lastRamWarningLevel = 0;
-
     const int cpuWarningLevel = static_cast<int>(
         WarningThresholdPolicy::cpuLevel(m_cpuUsage, m_cpuWarnThreshold, m_cpuCritThreshold)
     );
 
-    if (cpuWarningLevel != lastCpuWarningLevel) {
+    if (cpuWarningLevel != m_lastCpuWarningLevel) {
         if (cpuWarningLevel == 2) {
             m_settingsManager->addLog("CRIT", QString("CPU usage critical: %1%").arg(m_cpuUsage));
         }
         else if (cpuWarningLevel == 1) {
             m_settingsManager->addLog("WARN", QString("CPU usage high: %1%").arg(m_cpuUsage));
         }
-        lastCpuWarningLevel = cpuWarningLevel;
+        m_lastCpuWarningLevel = cpuWarningLevel;
     }
 
     const int ramWarningLevel = static_cast<int>(
         WarningThresholdPolicy::ramLevel(m_ramUsage, m_ramWarnThreshold)
     );
 
-    if (ramWarningLevel != lastRamWarningLevel) {
+    if (ramWarningLevel != m_lastRamWarningLevel) {
         if (ramWarningLevel == 1) {
             m_settingsManager->addLog("WARN", QString("RAM usage high: %1%").arg(m_ramUsage));
         }
-        lastRamWarningLevel = ramWarningLevel;
+        m_lastRamWarningLevel = ramWarningLevel;
     }
 }
 

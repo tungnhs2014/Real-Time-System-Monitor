@@ -1,11 +1,15 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
 import QtQuick 2.15
+import "../theme"
 
 Item {
     id: root
 
     // PROPERTIES
     width: 304
-    height: 50  // Compact layout for 2 partitions
+    height: 44
 
     property string partitionName: "Partition"
     property string totalSize: "0 GB"
@@ -14,7 +18,7 @@ Item {
     property string freeSize: "0 GB"
 
     // Auto-calculated properties
-    property color barColor: _calculateColor()
+    readonly property color effectiveBarColor: _calculateColor()
 
     // PARTITION LABEL
     Text {
@@ -24,7 +28,7 @@ Item {
             top: parent.top
         }
         text: root.partitionName + " (" + root.totalSize + ")"
-        font.family: "DejaVu Sans"
+        font.family: Theme.fontFamily
         font.pixelSize: 10
         font.bold: true
         color: "#FFFFFF"
@@ -33,6 +37,8 @@ Item {
         renderType: Text.NativeRendering
         antialiasing: false
         font.hintingPreference: Font.PreferFullHinting
+        width: parent.width
+        elide: Text.ElideRight
     }
 
     // PROGRESS BAR ROW
@@ -41,13 +47,13 @@ Item {
         anchors {
             left: parent.left
             top: labelText.bottom
-            topMargin: 4
+            topMargin: 3
         }
         spacing: 8
 
         // BAR CONTAINER
         Item {
-            width: 240
+            width: root.width - 56
             height: 8
 
             // Background bar
@@ -68,12 +74,12 @@ Item {
                 width: (parent.width * root.usage) / 100
                 height: parent.height
                 radius: parent.height / 2
-                color: root.barColor
+                color: root.effectiveBarColor
 
                 // Smooth width animation
                 Behavior on width {
                     NumberAnimation {
-                        duration: 300
+                        duration: uiAnimationDuration
                         easing.type: Easing.OutCubic
                     }
                 }
@@ -81,7 +87,7 @@ Item {
                 // Smooth color transition
                 Behavior on color {
                     ColorAnimation {
-                        duration: 200
+                        duration: uiAnimationDuration
                     }
                 }
             }
@@ -91,21 +97,23 @@ Item {
         Text {
             id: percentageText
             text: root.usage + "%"
-            font.family: "DejaVu Sans"
+            font.family: Theme.fontFamily
             font.pixelSize: 10
             font.bold: true
-            color: root.barColor
+            color: root.effectiveBarColor
             anchors.verticalCenter: parent.verticalCenter
 
             // RGB565 optimizations
             renderType: Text.NativeRendering
             antialiasing: false
             font.hintingPreference: Font.PreferFullHinting
+            width: 48
+            elide: Text.ElideRight
 
             // Smooth color transition
             Behavior on color {
                 ColorAnimation {
-                    duration: 200
+                    duration: uiAnimationDuration
                 }
             }
         }
@@ -117,10 +125,10 @@ Item {
         anchors {
             left: parent.left
             top: barRow.bottom
-            topMargin: 4
+            topMargin: 3
         }
         text: "Used: " + root.usedSize + " | Free: " + root.freeSize
-        font.family: "DejaVu Sans"
+        font.family: Theme.fontFamily
         font.pixelSize: 8
         color: "#B0B8C8"
 
@@ -128,6 +136,8 @@ Item {
         renderType: Text.NativeRendering
         antialiasing: false
         font.hintingPreference: Font.PreferFullHinting
+        width: parent.width
+        elide: Text.ElideRight
     }
 
     // COLOR LOGIC
@@ -143,8 +153,4 @@ Item {
         }
     }
 
-    // Recalculate color when usage changes
-    onUsageChanged: {
-        barColor = _calculateColor();
-    }
 }

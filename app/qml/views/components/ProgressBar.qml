@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
 import QtQuick 2.15
 
 Rectangle {
@@ -17,7 +20,7 @@ Rectangle {
         color: root.fillColor
 
         Behavior on width {
-            NumberAnimation { duration: 300 }
+            NumberAnimation { duration: uiAnimationDuration }
         }
     }
 }

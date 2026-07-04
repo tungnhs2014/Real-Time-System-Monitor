@@ -1,23 +1,47 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
 import QtQuick 2.15
+import "../theme"
 
 Rectangle {
     id: root
 
     // PROPERTIES
-    width: 320
-    height: 30
+    width: Theme.screenWidth
+    height: Theme.headerHeight
 
     // Customizable properties
     property string title: "DETAIL"
-    property color backgroundColor: "#0F1419"
-    property color textColor: "#FFFFFF"
+    property color backgroundColor: Theme.pageBackground
+    property color textColor: Theme.primaryText
     property int fontSize: 12
     property bool showBackButton: true
     property bool showSettingsIcon: true
+    property double lastBackPressMs: 0
+    property double lastSettingsPressMs: 0
 
     // SIGNALS
     signal backClicked()
     signal settingsClicked()
+
+    function requestBack() {
+        var now = Date.now()
+        if (now - lastBackPressMs < 150) {
+            return
+        }
+        lastBackPressMs = now
+        backClicked()
+    }
+
+    function requestSettings() {
+        var now = Date.now()
+        if (now - lastSettingsPressMs < 150) {
+            return
+        }
+        lastSettingsPressMs = now
+        settingsClicked()
+    }
 
     // BACKGROUND
     color: backgroundColor
@@ -30,7 +54,7 @@ Rectangle {
             bottom: parent.bottom
         }
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.1)
+        color: Theme.borderSubtle
     }
 
     // BACK BUTTON
@@ -41,8 +65,8 @@ Rectangle {
             leftMargin: 8
             verticalCenter: parent.verticalCenter
         }
-        width: 44
-        height: 44
+        width: Theme.touchTarget
+        height: Theme.touchTarget
         visible: root.showBackButton
 
         // Back arrow icon (PNG)
@@ -60,10 +84,13 @@ Rectangle {
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
-            onClicked: root.backClicked()
-            onPressed: backIcon.opacity = 0.6
+            preventStealing: true
+            onPressed: {
+                backIcon.opacity = 0.6
+            }
             onReleased: backIcon.opacity = 1.0
             onCanceled: backIcon.opacity = 1.0
+            onClicked: root.requestBack()
         }
     }
 
@@ -71,14 +98,17 @@ Rectangle {
     Text {
         id: titleText
         anchors.centerIn: parent
+        width: parent.width - 112
         text: root.title
-        font.family: "DejaVu Sans"
+        font.family: Theme.fontFamily
         font.pixelSize: root.fontSize
         font.bold: true
         color: root.textColor
         renderType: Text.NativeRendering
         antialiasing: false
         font.hintingPreference: Font.PreferFullHinting
+        horizontalAlignment: Text.AlignHCenter
+        elide: Text.ElideRight
     }
 
     // SETTINGS ICON
@@ -89,8 +119,8 @@ Rectangle {
             rightMargin: 8
             verticalCenter: parent.verticalCenter
         }
-        width: 44   // ✅ Touch target 44x44
-        height: 44  // ✅ Touch target 44x44
+        width: Theme.touchTarget
+        height: Theme.touchTarget
         visible: root.showSettingsIcon
 
         // Settings gear icon (PNG)
@@ -108,10 +138,13 @@ Rectangle {
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
-            onClicked: root.settingsClicked()
-            onPressed: settingsIcon.opacity = 0.6
+            preventStealing: true
+            onPressed: {
+                settingsIcon.opacity = 0.6
+            }
             onReleased: settingsIcon.opacity = 1.0
             onCanceled: settingsIcon.opacity = 1.0
+            onClicked: root.requestSettings()
         }
     }
 }

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
 import QtQuick 2.15
 
 Item {
@@ -68,7 +71,29 @@ Item {
             }
         }
 
-        Component.onCompleted: requestPaint()
+        Component.onCompleted: root._scheduleGridPaint()
+    }
+
+    Timer {
+        id: chartPaintTimer
+        interval: embeddedTarget ? 100 : 16
+        repeat: false
+        onTriggered: {
+            if (root.visible) {
+                chartCanvas.requestPaint()
+            }
+        }
+    }
+
+    Timer {
+        id: gridPaintTimer
+        interval: embeddedTarget ? 100 : 16
+        repeat: false
+        onTriggered: {
+            if (root.visible && root.showGrid) {
+                gridCanvas.requestPaint()
+            }
+        }
     }
 
     // MAIN CHART CANVAS
@@ -205,29 +230,41 @@ Item {
         return Math.ceil(max * 1.1);
     }
 
+    function _scheduleChartPaint() {
+        if (root.visible && !chartPaintTimer.running) {
+            chartPaintTimer.start();
+        }
+    }
+
+    function _scheduleGridPaint() {
+        if (root.visible && root.showGrid && !gridPaintTimer.running) {
+            gridPaintTimer.start();
+        }
+    }
+
     // DATA CHANGE HANDLER
     onDataPointsChanged: {
-        chartCanvas.requestPaint();
+        _scheduleChartPaint();
     }
 
     onLineColorChanged: {
-        chartCanvas.requestPaint();
+        _scheduleChartPaint();
     }
 
     onSmoothLineChanged: {
-        chartCanvas.requestPaint();
+        _scheduleChartPaint();
     }
 
     onShowFillChanged: {
-        chartCanvas.requestPaint();
+        _scheduleChartPaint();
     }
 
     onMinValueChanged: {
-        chartCanvas.requestPaint();
+        _scheduleChartPaint();
     }
 
     onMaxValueChanged: {
-        chartCanvas.requestPaint();
+        _scheduleChartPaint();
     }
 
     // VALUE LABELS ON LINE
@@ -327,10 +364,8 @@ Item {
 
     // INITIALIZATION
     Component.onCompleted: {
-        chartCanvas.requestPaint();
-        if (root.showGrid) {
-            gridCanvas.requestPaint();
-        }
+        _scheduleChartPaint();
+        _scheduleGridPaint();
     }
 
 }

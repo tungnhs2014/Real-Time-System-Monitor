@@ -1,13 +1,17 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
 import QtQuick 2.15
 import "../components"
+import "../theme"
 
 Rectangle {
     id: root
 
     // PROPERTIES
-    width: 320
-    height: 240
-    color: "#0F1419"
+    width: Theme.screenWidth
+    height: Theme.screenHeight
+    color: Theme.pageBackground
 
     // SIGNALS FOR NAVIGATION
     signal backRequested()
@@ -61,7 +65,6 @@ Rectangle {
             left: parent.left
             right: parent.right
             bottom: bottomNav.top
-            bottomMargin: 55
         }
 
         // NETWORK INFO CARD
@@ -74,10 +77,10 @@ Rectangle {
             }
             width: 304
             height: 30
-            color: "#1E2539"
-            radius: 8
+            color: Theme.cardBackground
+            radius: Theme.cardRadius
             border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.1)
+            border.color: Theme.borderSubtle
 
             Row {
                 anchors {
@@ -85,42 +88,50 @@ Rectangle {
                     leftMargin: 8
                     verticalCenter: parent.verticalCenter
                 }
-                spacing: 16
+                spacing: 8
 
                 // Interface info
                 Column {
+                    width: 128
                     spacing: 2
 
                     Text {
+                        width: parent.width
                         text: "Interface: " + systemInfo.networkInterface
-                        font.family: "DejaVu Sans"
-                        color: "#FFFFFF"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 8
+                        color: Theme.primaryText
                         renderType: Text.NativeRendering
                         antialiasing: false
                         font.hintingPreference: Font.PreferFullHinting
+                        elide: Text.ElideRight
                     }
 
                     Text {
+                        width: parent.width
                         text: "MAC: " + systemInfo.macAddress
-                        font.family: "DejaVu Sans"
+                        font.family: Theme.fontFamily
                         font.pixelSize: 7
-                        color: "#B0B8C8"
+                        color: Theme.secondaryText
                         renderType: Text.NativeRendering
                         antialiasing: false
                         font.hintingPreference: Font.PreferFullHinting
+                        elide: Text.ElideRight
                     }
                 }
 
                 // IP address
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
+                    width: 152
                     text: "IP: " + systemInfo.ipAddress
-                    font.family: "Dejavu Sans"
-                    font.pixelSize: 9
-                    color: "#FFFFFF"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 8
+                    color: Theme.primaryText
                     renderType: Text.NativeRendering
                     antialiasing: false
                     font.hintingPreference: Font.PreferFullHinting
+                    elide: Text.ElideRight
                 }
             }
         }
@@ -135,10 +146,10 @@ Rectangle {
             }
             width: 304
             height: 60
-            color: "#1E2539"
-            radius: 8
+            color: Theme.cardBackground
+            radius: Theme.cardRadius
             border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.1)
+            border.color: Theme.borderSubtle
 
             Column {
                 anchors.fill: parent
@@ -272,51 +283,61 @@ Rectangle {
 
             // Current speeds
             Row {
+                width: parent.width
                 spacing: 10
 
                 Text {
+                    width: 136
                     text: "↑ Up: " + systemInfo.netUpSpeed
-                    font.family: "DejaVu Sans"
+                    font.family: Theme.fontFamily
                     font.pixelSize: 10
-                    color: "#00BCD4"
+                    color: Theme.accentCyan
                     renderType: Text.NativeRendering
                     antialiasing: false
                     font.hintingPreference: Font.PreferFullHinting
+                    elide: Text.ElideRight
                 }
 
                 Text {
+                    width: 158
                     text: "↓ Down: " + systemInfo.netDownSpeed
-                    font.family: "DejaVu Sans"
+                    font.family: Theme.fontFamily
                     font.pixelSize: 10
-                    color: "#FF9800"
+                    color: Theme.accentOrange
                     renderType: Text.NativeRendering
                     antialiasing: false
                     font.hintingPreference: Font.PreferFullHinting
+                    elide: Text.ElideRight
                 }
             }
 
             // Additional stats
             Row {
+                width: parent.width
                 spacing: 12
 
                 Text {
+                    width: 166
                     text: "Packets: " + systemInfo.packetRate
-                    font.family: "DejaVu Sans"
+                    font.family: Theme.fontFamily
                     font.pixelSize: 8
-                    color: "#B0B8C8"
+                    color: Theme.secondaryText
                     renderType: Text.NativeRendering
                     antialiasing: false
                     font.hintingPreference: Font.PreferFullHinting
+                    elide: Text.ElideRight
                 }
 
                 Text {
+                    width: 126
                     text: "Connections: " + systemInfo.activeConnections
-                    font.family: "DejaVu Sans"
+                    font.family: Theme.fontFamily
                     font.pixelSize: 8
-                    color: "#B0B8C8"
+                    color: Theme.secondaryText
                     renderType: Text.NativeRendering
                     antialiasing: false
                     font.hintingPreference: Font.PreferFullHinting
+                    elide: Text.ElideRight
                 }
             }
         }

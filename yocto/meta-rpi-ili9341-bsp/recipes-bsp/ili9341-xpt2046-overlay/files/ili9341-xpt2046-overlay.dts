@@ -1,0 +1,86 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "brcm,bcm2837", "brcm,bcm2710";
+
+    fragment@0 {
+        target = <&spi0>;
+        __overlay__ {
+            status = "okay";
+            #address-cells = <1>;
+            #size-cells = <0>;
+
+            /delete-node/ spidev@0;
+            /delete-node/ spidev@1;
+
+            ili9341: ili9341@0 {
+                compatible = "ilitek,ili9341";
+                reg = <0>;
+
+                spi-max-frequency = <32000000>;
+
+                dc-gpios = <&gpio 24 0>;
+                reset-gpios = <&gpio 25 0>;
+                led-gpios = <&gpio 18 0>;
+
+                rotation = <90>;
+                fps = <30>;
+
+                status = "okay";
+            };
+
+            xpt2046: xpt2046@1 {
+                compatible = "xptek,xpt2046";
+                reg = <1>;
+
+                spi-max-frequency = <2000000>;
+
+                /* PENIRQ is active low and triggers the polling work. */
+                interrupt-parent = <&gpio>;
+                interrupts = <17 2>;
+                pendown-gpios = <&gpio 17 0>;
+
+                ti,x-min = <200>;
+                ti,x-max = <3900>;
+                ti,y-min = <200>;
+                ti,y-max = <3900>;
+                ti,pressure-min = <30>;
+                ti,pressure-max = <255>;
+
+                ti,swap-xy;
+                ti,invert-x;
+                ti,invert-y;
+
+                status = "okay";
+            };
+        };
+    };
+
+    fragment@1 {
+        target = <&gpio>;
+        __overlay__ {
+            ili9341_pins: ili9341_pins {
+                brcm,pins = <24 25 18>;
+                brcm,function = <1 1 1>;
+                brcm,pull = <0 0 0>;
+            };
+
+            xpt2046_pins: xpt2046_pins {
+                brcm,pins = <17>;
+                brcm,function = <0>;
+                brcm,pull = <2>;
+            };
+        };
+    };
+
+    __overrides__ {
+        speed = <&ili9341>,"spi-max-frequency:0";
+        rotation = <&ili9341>,"rotation:0";
+        fps = <&ili9341>,"fps:0";
+        touch_speed = <&xpt2046>,"spi-max-frequency:0";
+    };
+};

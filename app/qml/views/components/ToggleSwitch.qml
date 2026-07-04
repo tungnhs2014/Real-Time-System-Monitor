@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
 import QtQuick 2.15
 
 Item {
@@ -32,7 +35,7 @@ Item {
         // Smooth color transition
         Behavior on color {
             ColorAnimation {
-                duration: 200
+                duration: uiAnimationDuration
             }
         }
 
@@ -55,7 +58,7 @@ Item {
         // Smooth slide animation
         Behavior on x {
             NumberAnimation {
-                duration: 200
+                duration: uiAnimationDuration
                 easing.type: Easing.InOutCubic
             }
         }

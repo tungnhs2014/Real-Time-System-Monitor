@@ -1,13 +1,17 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
 import QtQuick 2.15
 import "../components"
+import "../theme"
 
 Rectangle {
     id: root
 
     // PROPERTIES
-    width: 320
-    height: 240
-    color: "#0F1419"
+    width: Theme.screenWidth
+    height: Theme.screenHeight
+    color: Theme.pageBackground
 
     // SIGNALS FOR NAVIGATION
     signal backRequested()
@@ -41,16 +45,15 @@ Rectangle {
             left: parent.left
             right: parent.right
             bottom: bottomNav.top
-            bottomMargin: 55
         }
 
         Column {
             anchors {
                 horizontalCenter: parent.horizontalCenter
                 top: parent.top
-                topMargin: 8
+                topMargin: 6
             }
-            spacing: 8
+            spacing: 5
 
             // ROOT PARTITION
             PartitionBar {
@@ -75,11 +78,11 @@ Rectangle {
             // I/O STATISTICS CARD
             Rectangle {
                 width: 304
-                height: 40
-                color: "#1E2539"
-                radius: 8
+                height: 38
+                color: Theme.cardBackground
+                radius: Theme.cardRadius
                 border.width: 1
-                border.color: Qt.rgba(1, 1, 1, 0.1)
+                border.color: Theme.borderSubtle
 
                 Column {
                     anchors.fill: parent
@@ -101,7 +104,7 @@ Rectangle {
                     // Mini chart
                     LineChart {
                         width: 288
-                        height: 20
+                        height: 18
                         dataPoints: systemInfo.ioHistory
                         lineColor: "#FFEB3B"  // Yellow for I/O
                         smoothLine: true
@@ -121,6 +124,7 @@ Rectangle {
                 spacing: 10
 
                 Text {
+                    width: 144
                     text: "Read: " + systemInfo.ioRead
                     font.family: "DejaVu Sans"
                     font.pixelSize: 8
@@ -128,9 +132,11 @@ Rectangle {
                     renderType: Text.NativeRendering
                     antialiasing: false
                     font.hintingPreference: Font.PreferFullHinting
+                    elide: Text.ElideRight
                 }
 
                 Text {
+                    width: 150
                     text: "Write: " + systemInfo.ioWrite
                     font.family: "DejaVu Sans"
                     font.pixelSize: 8
@@ -138,6 +144,7 @@ Rectangle {
                     renderType: Text.NativeRendering
                     antialiasing: false
                     font.hintingPreference: Font.PreferFullHinting
+                    elide: Text.ElideRight
                 }
             }
         }

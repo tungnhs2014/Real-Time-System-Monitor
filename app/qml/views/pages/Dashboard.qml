@@ -1,15 +1,31 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
 import QtQuick 2.15
 import "../components"
+import "../theme"
 
 Rectangle {
     id: root
 
-    width: 320
-    height: 240
-    color: "#0A0E14"  
+    width: Theme.screenWidth
+    height: Theme.screenHeight
+    color: Theme.dashboardBackground
+
+    property string currentTime: Qt.formatTime(new Date(), "hh:mm")
+    property double lastNavigationPressMs: 0
 
     signal navigationRequested(int index)
     signal settingsRequested()
+
+    function requestNavigation(index) {
+        var now = Date.now()
+        if (now - lastNavigationPressMs < 150) {
+            return
+        }
+        lastNavigationPressMs = now
+        navigationRequested(index)
+    }
 
     // Top Bar
     TopBar {
@@ -17,7 +33,7 @@ Rectangle {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        currentTime: Qt.formatTime(new Date(), "hh:mm")
+        currentTime: root.currentTime
         hostname: systemInfo.hostname
 
         onSettingsClicked: root.settingsRequested()
@@ -78,15 +94,6 @@ Rectangle {
                         strokeWidth: 2
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.horizontalCenterOffset: -14
-
-                        MouseArea {
-                            anchors.fill: parent
-                            anchors.margins: -10
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                root.navigationRequested(1)
-                            }
-                        }
                     }
 
                     Column {
@@ -136,6 +143,13 @@ Rectangle {
                         antialiasing: false
                     }
                 }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                preventStealing: true
+                onPressed: root.requestNavigation(1)
             }
         }
 
@@ -340,15 +354,6 @@ Rectangle {
                         strokeWidth: 2
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.horizontalCenterOffset: -14
-
-                        MouseArea {
-                            anchors.fill: parent
-                            anchors.margins: -10
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                root.navigationRequested(2)  // Navigate to Memory Detail (index 2)
-                            }
-                        }
                     }
 
                     Column {
@@ -399,6 +404,13 @@ Rectangle {
                         antialiasing: false
                     }
                 }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                preventStealing: true
+                onPressed: root.requestNavigation(2)
             }
         }
 
@@ -453,15 +465,6 @@ Rectangle {
                             color: "#FFFFFF"
                             renderType: Text.NativeRendering
                             antialiasing: false
-
-                            MouseArea {
-                                anchors.fill: parent
-                                anchors.margins: -10
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    root.navigationRequested(3)  // Navigate to Storage Detail (index 3)
-                                }
-                            }
                         }
 
                         ProgressBar {
@@ -514,6 +517,8 @@ Rectangle {
                             color: "#4CAF50"
                             renderType: Text.NativeRendering
                             antialiasing: false
+                            width: 38
+                            elide: Text.ElideRight
                         }
                         Text {
                             text: "↑" + systemInfo.netUpSpeed
@@ -524,9 +529,18 @@ Rectangle {
                             color: "#F44336"
                             renderType: Text.NativeRendering
                             antialiasing: false
+                            width: 38
+                            elide: Text.ElideRight
                         }
                     }
                 }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                preventStealing: true
+                onPressed: root.requestNavigation(3)
             }
         }
 
@@ -569,7 +583,7 @@ Rectangle {
 
                     Text {
                         anchors.centerIn: parent
-                        text: Qt.formatTime(new Date(), "hh:mm") 
+                        text: root.currentTime
                         font.family: "DejaVu Sans"
                         font.pixelSize: 18
                         font.bold: true
@@ -585,7 +599,7 @@ Rectangle {
                 interval: 1000
                 running: true
                 repeat: true
-                onTriggered: parent.children[0].children[1].children[0].text = Qt.formatTime(new Date(), "hh:mm")
+                onTriggered: root.currentTime = Qt.formatTime(new Date(), "hh:mm")
             }
         }
     }

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -7,18 +10,12 @@
 #include <QDir>
 
 #include "controller/SystemController.h"
-#include "controller/NavigationController.h"
 
 #include "common/Constants.h"
 #include "common/Logger.h"
 
 #ifdef PLATFORM_RASPBERRY_PI
-/**
- * @brief Auto-detect the target touch input device for Qt evdev.
- *
- * The search prefers XPT2046/ADS7846-style names and falls back to event0 so a
- * board image can still boot far enough for troubleshooting.
- */
+// Prefer the XPT2046 input node, with event0 as a bring-up fallback.
 QString findTouchDevice()
 {
     for (int i = 0; i < 10; i++) {
@@ -51,16 +48,22 @@ int main(int argc, char *argv[])
 {
 #ifdef PLATFORM_RASPBERRY_PI
     qputenv("QT_QPA_PLATFORM", "linuxfb:fb=/dev/fb1:size=320x240:mmSize=60x45:offset=0x0");
+    constexpr bool embeddedTarget = true;
+    constexpr int uiAnimationDurationMs = 0;
 
     QString touchDevice = findTouchDevice();
     QByteArray touchParams = QString("%1:rotate=0:invertx=0:inverty=0")
                             .arg(touchDevice).toUtf8();
     qputenv("QT_QPA_EVDEV_TOUCHSCREEN_PARAMETERS", touchParams);
     qputenv("QT_QPA_GENERIC_PLUGINS", QString("evdevtouch:%1").arg(touchDevice).toUtf8());
+    // Keep linuxfb from registering a second backend for the same XPT2046 node.
+    qputenv("QT_QPA_FB_DISABLE_INPUT", "1");
 
     qDebug() << "Platform: Raspberry Pi - RGB565 mode";
     qDebug() << "Touch device:" << touchDevice;
 #else
+    constexpr bool embeddedTarget = false;
+    constexpr int uiAnimationDurationMs = 180;
     qDebug() << "Platform: Desktop";
 #endif
 
@@ -82,13 +85,11 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
 
     SystemController* systemController = new SystemController(&app);
-    NavigationController* navController = new NavigationController(&app);
 
     engine.rootContext()->setContextProperty("systemInfo", systemController);
-    engine.rootContext()->setContextProperty("navigation", navController);
+    engine.rootContext()->setContextProperty("embeddedTarget", embeddedTarget);
+    engine.rootContext()->setContextProperty("uiAnimationDuration", uiAnimationDurationMs);
 
-    // Logger is only available in QML when LOG_LEVEL > 0 (Debug/Development builds)
-    // In Release builds (LOG_LEVEL=0), Logger is a stub without QObject inheritance
 #if LOG_LEVEL > LOG_LEVEL_OFF
     engine.rootContext()->setContextProperty("logger", &Logger::instance());
 #endif

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
 import QtQuick 2.15
 
 Item {
@@ -11,7 +14,7 @@ Item {
     property int usage: 0               // Usage percentage (0-100)
 
     // Auto-calculated properties
-    property color barColor: _calculateColor()
+    readonly property color effectiveBarColor: _calculateColor()
     property string labelText: "C" + (coreIndex + 1)  + " " + usage + "%"
 
     // BACKGROUND BAR
@@ -37,12 +40,12 @@ Item {
         width: (backgroundBar.width * root.usage) / 100
         height: backgroundBar.height
         radius: backgroundBar.radius
-        color: root.barColor
+        color: root.effectiveBarColor
 
         // Smooth width animation when usage changes
         Behavior on width {
             NumberAnimation {
-                duration: 300
+                duration: uiAnimationDuration
                 easing.type: Easing.OutCubic
             }
         }
@@ -50,7 +53,7 @@ Item {
         // Smooth color transition
         Behavior on color {
             ColorAnimation {
-                duration: 200
+                duration: uiAnimationDuration
             }
         }
     }
@@ -66,7 +69,7 @@ Item {
         font.family: "DejaVu Sans"
         font.pixelSize: 8
         font.bold: true
-        color: root.barColor    // Match bar color
+        color: root.effectiveBarColor
 
         // RGB565 optimizations
         renderType: Text.NativeRendering
@@ -76,7 +79,7 @@ Item {
         // Smooth color transition
         Behavior on color {
             ColorAnimation {
-                duration: 200
+                duration: uiAnimationDuration
             }
         }
     }
@@ -92,11 +95,6 @@ Item {
         else {
             return "#FF9800";  // Orange - high usage, warning
         }
-    }
-
-    // Recalculate color when usage changes
-    onUsageChanged: {
-        barColor = _calculateColor();
     }
 
 }

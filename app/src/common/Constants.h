@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
@@ -8,7 +11,7 @@ namespace App {
 
 namespace Info {
     constexpr const char* NAME = "ILI9341 System Monitor";
-    constexpr const char* VERSION = "4.0.0";
+    constexpr const char* VERSION = "1.0.0";
     constexpr const char* ORGANIZATION = "ILI9341";
     constexpr const char* DOMAIN = "ili9341.embedded";
 }

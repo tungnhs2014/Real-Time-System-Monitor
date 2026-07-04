@@ -1,10 +1,13 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
 import QtQuick 2.15
 
 Item {
     id: root
 
-    width: 140
-    height: 44
+    width: 128
+    height: 38
 
     // Properties
     property int value: 70
@@ -13,8 +16,31 @@ Item {
     property int step: 5
     property string suffix: "%"
     property bool enabled: true
+    property double lastAdjustMs: 0
 
     // Note: valueChanged signal is automatically created by the 'value' property
+    function adjustValue(direction) {
+        if (direction === 0) {
+            return
+        }
+
+        var now = Date.now()
+        if (now - lastAdjustMs < 120) {
+            return
+        }
+
+        var newValue = root.value + (root.step * direction)
+        if (newValue >= root.minValue && newValue <= root.maxValue) {
+            root.value = newValue
+            lastAdjustMs = now
+        } else {
+            stopRapidAdjust()
+        }
+    }
+
+    function stopRapidAdjust() {
+        rapidTimer.direction = 0
+    }
 
     Row {
         anchors.fill: parent
@@ -23,8 +49,8 @@ Item {
         // MINUS BUTTON
         Rectangle {
             id: minusBtn
-            width: 44
-            height: 44
+            width: 40
+            height: 38
             radius: 4
             color: "#1E2539"
             border.width: 1
@@ -40,7 +66,7 @@ Item {
             Text {
                 anchors.centerIn: parent
                 text: "−"
-                font.pixelSize: 20
+                font.pixelSize: 18
                 font.bold: true
                 font.family: "DejaVu Sans"
                 color: root.value > root.minValue && root.enabled ? "#FFFFFF" : "#4A5568"
@@ -52,24 +78,22 @@ Item {
                 id: minusArea
                 anchors.fill: parent
                 hoverEnabled: true
+                preventStealing: true
                 enabled: root.enabled && root.value > root.minValue
 
-                onClicked: {
-                    if (root.value - root.step >= root.minValue) {
-                        root.value -= root.step
-                    }
-                }
+                onPressed: root.adjustValue(-1)
 
                 // Long press for rapid decrease
                 onPressAndHold: rapidTimer.direction = -1
-                onReleased: rapidTimer.stop()
+                onReleased: root.stopRapidAdjust()
+                onCanceled: root.stopRapidAdjust()
             }
         }
 
         // VALUE DISPLAY
         Rectangle {
-            width: 52  // Fixed width for value
-            height: 44
+            width: 48
+            height: 38
             radius: 4
             color: "#1E2539"
             border.width: 1
@@ -79,7 +103,7 @@ Item {
                 anchors.centerIn: parent
                 text: root.value + root.suffix
                 font.family: "DejaVu Sans"
-                font.pixelSize: 13
+                font.pixelSize: 12
                 font.bold: true
                 font.hintingPreference: Font.PreferFullHinting
                 color: root.enabled ? "#FFFFFF" : "#4A5568"
@@ -91,8 +115,8 @@ Item {
         // PLUS BUTTON
         Rectangle {
             id: plusBtn
-            width: 44
-            height: 44
+            width: 40
+            height: 38
             radius: 4
             color: "#1E2539"
             border.width: 1
@@ -108,7 +132,7 @@ Item {
             Text {
                 anchors.centerIn: parent
                 text: "+"
-                font.pixelSize: 20
+                font.pixelSize: 18
                 font.bold: true
                 font.family: "DejaVu Sans"
                 color: root.value < root.maxValue && root.enabled ? "#FFFFFF" : "#4A5568"
@@ -120,17 +144,15 @@ Item {
                 id: plusArea
                 anchors.fill: parent
                 hoverEnabled: true
+                preventStealing: true
                 enabled: root.enabled && root.value < root.maxValue
 
-                onClicked: {
-                    if (root.value + root.step <= root.maxValue) {
-                        root.value += root.step
-                    }
-                }
+                onPressed: root.adjustValue(1)
 
                 // Long press for rapid increase
                 onPressAndHold: rapidTimer.direction = 1
-                onReleased: rapidTimer.stop()
+                onReleased: root.stopRapidAdjust()
+                onCanceled: root.stopRapidAdjust()
             }
         }
     }
@@ -139,17 +161,10 @@ Item {
     Timer {
         id: rapidTimer
         property int direction: 0
-        interval: 100
+        interval: 120
         repeat: true
         running: direction !== 0
 
-        onTriggered: {
-            var newValue = root.value + (root.step * direction)
-            if (newValue >= root.minValue && newValue <= root.maxValue) {
-                root.value = newValue
-            } else {
-                stop()
-            }
-        }
+        onTriggered: root.adjustValue(direction)
     }
 }

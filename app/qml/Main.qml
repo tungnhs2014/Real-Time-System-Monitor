@@ -1,100 +1,169 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
 import QtQuick 2.15
 import QtQuick.Window 2.15
 import QtQuick.Controls 2.15
 import "views/pages"
-import "views/components"
+import "views/theme"
 
 Window {
     id: root
 
-    width: 320
-    height: 240
+    width: Theme.screenWidth
+    height: Theme.screenHeight
 
     visible: true
     title: "ILI9341 System Monitor"
 
-    // Frameless window for embedded
     flags: Qt.FramelessWindowHint
 
-    color: "#0F1419"
+    color: Theme.pageBackground
 
-    // Performance optimizations for embedded
     Component.onCompleted: {
-        // Disable unnecessary visual updates
         contentItem.smooth = false
         contentItem.antialiasing = false
     }
 
-    // NAVIGATION STACK
+    readonly property int pageAnimationDuration: uiAnimationDuration
+    property bool navigationInputBlocked: false
+
     StackView {
         id: stackView
         anchors.fill: parent
 
-        // Initial page
         initialItem: dashboardComponent
 
-        // Dashboard component
         Component {
             id: dashboardComponent
 
             Dashboard {
-
+                objectName: "dashboard"
             }
         }
 
-        // Push transition (slide in from right)
         pushEnter: Transition {
             PropertyAnimation {
                 property: "x"
                 from: root.width
                 to: 0
-                duration: 250
+                duration: root.pageAnimationDuration
                 easing.type: Easing.OutCubic
             }
             PropertyAnimation {
                 property: "opacity"
                 from: 0
                 to: 1
-                duration: 250
+                duration: root.pageAnimationDuration
             }
         }
 
-        // Push exit (current page fades out)
         pushExit: Transition {
             PropertyAnimation {
                 property: "opacity"
                 from: 1
                 to: 0
-                duration: 250
+                duration: root.pageAnimationDuration
             }
         }
 
-        // Pop transition (slide out to right)
         popExit: Transition {
             PropertyAnimation {
                 property: "x"
                 from: 0
                 to: root.width
-                duration: 250
+                duration: root.pageAnimationDuration
                 easing.type: Easing.InCubic
             }
             PropertyAnimation {
                 property: "opacity"
                 from: 1
                 to: 0
-                duration: 250
+                duration: root.pageAnimationDuration
             }
         }
 
-        // Pop enter (previous page fades in)
         popEnter: Transition {
             PropertyAnimation {
                 property: "opacity"
                 from: 0
                 to: 1
-                duration: 250
+                duration: root.pageAnimationDuration
             }
         }
+    }
+
+    function pageNameForIndex(index) {
+        if (index === 0) return "dashboard"
+        if (index === 1) return "cpuDetail"
+        if (index === 2) return "memoryDetail"
+        if (index === 3) return "storageDetail"
+        if (index === 4) return "networkDetail"
+        return ""
+    }
+
+    function pageComponentForIndex(index) {
+        if (index === 0) return dashboardComponent
+        if (index === 1) return cpuDetailComponent
+        if (index === 2) return memoryDetailComponent
+        if (index === 3) return storageDetailComponent
+        if (index === 4) return networkDetailComponent
+        return null
+    }
+
+    function navigateToIndex(index) {
+        var targetName = pageNameForIndex(index)
+        if (targetName === "" || (stackView.currentItem && stackView.currentItem.objectName === targetName)) {
+            return
+        }
+
+        if (!beginNavigation()) {
+            return
+        }
+
+        stackView.pop(null)
+
+        var targetComponent = pageComponentForIndex(index)
+        if (index !== 0 && targetComponent !== null) {
+            stackView.push(targetComponent)
+        }
+    }
+
+    function beginNavigation() {
+        if (navigationInputBlocked) {
+            return false
+        }
+
+        navigationInputBlocked = true
+        navigationInputGuard.restart()
+        return true
+    }
+
+    function goBack() {
+        if (stackView.depth > 1 && beginNavigation()) {
+            stackView.pop()
+        }
+    }
+
+    function openSettings() {
+        if (stackView.currentItem.objectName !== "settings" && beginNavigation()) {
+            stackView.push(settingsComponent)
+        }
+    }
+
+    Timer {
+        id: navigationInputGuard
+        interval: 300
+        repeat: false
+        onTriggered: root.navigationInputBlocked = false
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        visible: root.navigationInputBlocked
+        enabled: visible
+        z: 900
+        preventStealing: true
     }
 
     // CONNECTIONS FOR NAVIGATION
@@ -105,30 +174,17 @@ Window {
 
         // Handle back button clicks from DetailHeader
         function onBackRequested() {
-            if (stackView.depth > 1) {
-                stackView.pop()
-            }
+            root.goBack()
         }
 
         // Handle settings button clicks from DetailHeader
         function onSettingsRequested() {
-            // If already on Settings, do nothing
-            if (stackView.currentItem.objectName === "settings") {
-                return
-            }
-            stackView.push(settingsComponent)
+            root.openSettings()
         }
 
         // Handle bottom nav clicks
         function onNavigationRequested(index) {
-            // Pop to dashboard first
-            stackView.pop(null)
-
-            // Then push desired page (if not dashboard)
-            if (index === 1) stackView.push(cpuDetailComponent)
-            if (index === 2) stackView.push(memoryDetailComponent)
-            if (index === 3) stackView.push(storageDetailComponent)
-            if (index === 4) stackView.push(networkDetailComponent)
+            root.navigateToIndex(index)
         }
     }
 
@@ -176,39 +232,33 @@ Window {
         Keys.onPressed: function(event) {
             // Esc or Backspace = Go back
             if (event.key === Qt.Key_Escape || event.key === Qt.Key_Backspace) {
-                if (stackView.depth > 1) {
-                    stackView.pop()
-                }
+                root.goBack()
                 event.accepted = true
             }
 
             // Number keys for quick navigation (Desktop testing)
             else if (event.key === Qt.Key_0) {
-                stackView.pop(null) // Dashboard
+                root.navigateToIndex(0)
                 event.accepted = true
             }
             else if (event.key === Qt.Key_1) {
-                stackView.pop(null)
-                stackView.push(cpuDetailComponent)
+                root.navigateToIndex(1)
                 event.accepted = true
             }
             else if (event.key === Qt.Key_2) {
-                stackView.pop(null)
-                stackView.push(memoryDetailComponent)
+                root.navigateToIndex(2)
                 event.accepted = true
             }
             else if (event.key === Qt.Key_3) {
-                stackView.pop(null)
-                stackView.push(storageDetailComponent)
+                root.navigateToIndex(3)
                 event.accepted = true
             }
             else if (event.key === Qt.Key_4) {
-                stackView.pop(null)
-                stackView.push(networkDetailComponent)
+                root.navigateToIndex(4)
                 event.accepted = true
             }
             else if (event.key === Qt.Key_9) {
-                stackView.push(settingsComponent)
+                root.openSettings()
                 event.accepted = true
             }
         }

@@ -1,11 +1,9 @@
-<RCC version="1.0" >
+<!-- SPDX-License-Identifier: GPL-2.0-only -->
+<!-- Copyright (c) 2025-2026 TungNHS -->
+<RCC version="1.0">
     <qresource prefix="/">
         <!-- Main QML -->
         <file alias="qml/Main.qml">../qml/Main.qml</file>
-
-        <!-- Debug Singleton -->
-        <file alias="qml/Debug.qml">../qml/Debug.qml</file>
-        <file alias="qml/qmldir">../qml/qmldir</file>
 
         <!-- Pages -->
         <file alias="qml/views/pages/Dashboard.qml">../qml/views/pages/Dashboard.qml</file>
@@ -14,6 +12,10 @@
         <file alias="qml/views/pages/StorageDetail.qml">../qml/views/pages/StorageDetail.qml</file>
         <file alias="qml/views/pages/NetworkDetail.qml">../qml/views/pages/NetworkDetail.qml</file>
         <file alias="qml/views/pages/Settings.qml">../qml/views/pages/Settings.qml</file>
+
+        <!-- Theme -->
+        <file alias="qml/views/theme/Theme.qml">../qml/views/theme/Theme.qml</file>
+        <file alias="qml/views/theme/qmldir">../qml/views/theme/qmldir</file>
         
         <!-- Components -->
         <file alias="qml/views/components/BottomNav.qml">../qml/views/components/BottomNav.qml</file>

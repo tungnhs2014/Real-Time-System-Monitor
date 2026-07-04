@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
 import QtQuick 2.15
 
 Item {
@@ -12,6 +15,7 @@ Item {
     property bool useGradient: true
     property int strokeWidth: 3
     property int fontSize: 18
+    property int _lastPaintedValue: -1
 
     // Background circle
     Canvas {
@@ -37,7 +41,7 @@ Item {
             ctx.stroke();
         }
 
-        Component.onCompleted: requestPaint()
+        Component.onCompleted: if (root.visible) requestPaint()
     }
 
     // Progress arc
@@ -95,7 +99,32 @@ Item {
         smooth: false
     }
 
-    onValueChanged: {
-        progressCanvas.requestPaint();
+    Timer {
+        id: progressPaintTimer
+        interval: embeddedTarget ? 80 : 16
+        repeat: false
+        onTriggered: {
+            if (root.visible) {
+                progressCanvas.requestPaint()
+            }
+        }
     }
+
+    function _scheduleProgressPaint() {
+        var roundedValue = Math.round(root.value)
+        if (roundedValue === root._lastPaintedValue) {
+            return
+        }
+
+        root._lastPaintedValue = roundedValue
+        if (!progressPaintTimer.running) {
+            progressPaintTimer.start()
+        }
+    }
+
+    onValueChanged: {
+        _scheduleProgressPaint()
+    }
+
+    Component.onCompleted: _scheduleProgressPaint()
 }

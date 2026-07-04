@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
 #include "SettingsManager.h"
 #include "FileReader.h"
 #include "Constants.h"
@@ -6,24 +9,20 @@
 #include <QProcess>
 #include <unistd.h>
 
-SettingsManager::SettingsManager(QObject *parent)
+SettingsManager::SettingsManager(QObject* parent)
     : QObject(parent)
-    , m_updateInterval(App::Interval::NORMAL / 1000) // Convert ms to seconds
+    , m_updateInterval(App::Interval::NORMAL / 1000)
     , m_darkMode(true)
     , m_soundAlert(false)
     , m_cpuWarnThreshold(App::Threshold::CPU_WARNING)
     , m_cpuCritThreshold(App::Threshold::CPU_CRITICAL)
     , m_ramWarnThreshold(App::Threshold::RAM_WARNING)
 {
-    // Parse system information
     m_hostname = parseHostname();
     m_osVersion = parseOsVersion();
     m_kernelVersion = parseKernelVersion();
 
-    // Load saved settings
     load();
-
-    // Add initial log
     addLog("INFO", "System Monitor started");
 
     LOG_INFO(QString("SettingsManager initialized - hostname: %1").arg(m_hostname));
@@ -100,10 +99,8 @@ void SettingsManager::addLog(const QString &level, const QString &message)
     log["level"] = level;
     log["message"] = message;
 
-    // Add to front of list (most recent first)
     m_systemLogs.prepend(log);
 
-    // Trim to max size
     while (m_systemLogs.size() > MAX_LOGS) {
         m_systemLogs.removeLast();
     }
@@ -121,12 +118,10 @@ void SettingsManager::save()
 {
     QSettings settings(App::Info::ORGANIZATION, App::Info::NAME);
 
-    // Save user settings
     settings.setValue("updateInterval", m_updateInterval);
     settings.setValue("darkMode", m_darkMode);
     settings.setValue("soundAlert", m_soundAlert);
 
-    // Save warning thresholds
     settings.setValue("cpuWarnThreshold", m_cpuWarnThreshold);
     settings.setValue("cpuCritThreshold", m_cpuCritThreshold);
     settings.setValue("ramWarnThreshold", m_ramWarnThreshold);
@@ -142,7 +137,6 @@ void SettingsManager::load()
 {
     QSettings settings(App::Info::ORGANIZATION, App::Info::NAME);
 
-    // Load with default values;
     m_updateInterval = settings.value("updateInterval", 2).toInt();
     m_darkMode = settings.value("darkMode", true).toBool();
     m_soundAlert = settings.value("soundAlert", false).toBool();
@@ -159,7 +153,6 @@ void SettingsManager::reboot()
     addLog("WARN", "System reboot initiated");
     LOG_WARNING("System reboot initiated by user");
 
-    // Execute reboot command directly
     QProcess::startDetached("reboot", QStringList());
 }
 
@@ -168,7 +161,6 @@ void SettingsManager::shutdown()
     addLog("WARN", "System shutdown initiated");
     LOG_WARNING("System shutdown initiated by user");
 
-    // Execute shutdown command directly
     QProcess::startDetached("shutdown", {"-h", "now"});
 }
 
@@ -180,7 +172,6 @@ QString SettingsManager::parseHostname()
         return QString::fromUtf8(hostname);
     }
 
-    // Fallback: read from file
     QString hostnameFile = FileReader::readFirstLine(App::Path::ETC_HOSTNAME);
     if (!hostnameFile.isEmpty()) {
         return hostnameFile;
@@ -199,17 +190,14 @@ QString SettingsManager::parseOsVersion()
 
     QStringList lines = content.split('\n', Qt::SkipEmptyParts);
 
-    // Look for PRETTY_NAME first
     for (const QString &line : lines) {
         if (line.startsWith("PRETTY_NAME=")) {
-            QString prettyName = line.mid(12); // Remove "PRETTY_NAME="
-            // Remove quotes
+            QString prettyName = line.mid(12);
             prettyName = prettyName.remove('"');
             return prettyName;
         }
     }
 
-     // Fallback to NAME + VERSION
     QString name, version;
 
     for (const QString &line : lines) {
@@ -230,7 +218,6 @@ QString SettingsManager::parseOsVersion()
 
 QString SettingsManager::parseKernelVersion()
 {
-    // Execute 'uname -r' to get kernel version
     QProcess process;
     process.start("uname", {"-r"});
 
@@ -244,14 +231,12 @@ QString SettingsManager::parseKernelVersion()
 
 QString SettingsManager::parseUptime() const
 {
-    // Read /proc/uptime
     QString uptimeStr = FileReader::readFirstLine(App::Path::PROC_UPTIME);
 
     if (uptimeStr.isEmpty()) {
         return "N/A";
     }
 
-    // Format: "12345.67 12345.67"
     QStringList parts = uptimeStr.split(' ', Qt::SkipEmptyParts);
 
     if (parts.isEmpty()) {

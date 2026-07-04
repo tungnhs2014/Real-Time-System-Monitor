@@ -1,13 +1,17 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
 import QtQuick 2.15
 import "../components"
+import "../theme"
 
 Rectangle {
     id: root
 
     // PROPERTIES
-    width: 320
-    height: 240
-    color: "#0F1419"
+    width: Theme.screenWidth
+    height: Theme.screenHeight
+    color: Theme.pageBackground
 
     // SIGNALS FOR NAVIGATION
     signal backRequested()
@@ -35,8 +39,7 @@ Rectangle {
             top: header.bottom
             left: parent.left
             right: parent.right
-            bottom: parent.bottom
-            bottomMargin: 55
+            bottom: bottomNav.top
         }
 
         // TEMPERATURE CHART CARD
@@ -49,10 +52,10 @@ Rectangle {
             }
             width: 304
             height: 80
-            radius: 6
-            color: "#1E2539"
+            radius: Theme.cardRadius
+            color: Theme.cardBackground
             border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.1)
+            border.color: Theme.borderSubtle
 
             Column {
                 anchors.fill: parent
@@ -105,10 +108,10 @@ Rectangle {
             }
             width: 304
             height: 86
-            radius: 6
-            color: "#1E2539"
+            radius: Theme.cardRadius
+            color: Theme.cardBackground
             border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.1)
+            border.color: Theme.borderSubtle
 
             Column {
                 anchors.fill: parent

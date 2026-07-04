@@ -1,13 +1,17 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
 import QtQuick 2.15
 import "../components"
+import "../theme"
 
 Rectangle {
     id: root
 
     // PROPERTIES
-    width: 320
-    height: 240
-    color: "#0F1419"
+    width: Theme.screenWidth
+    height: Theme.screenHeight
+    color: Theme.pageBackground
 
     // SIGNALS FOR NAVIGATION
     signal backRequested()
@@ -42,7 +46,6 @@ Rectangle {
             left: parent.left
             right: parent.right
             bottom: bottomNav.top
-            bottomMargin: 55
         }
 
         // LARGE CIRCULAR GAUGE
@@ -78,7 +81,7 @@ Rectangle {
                     ctx.stroke();
                 }
 
-                Component.onCompleted: requestPaint()
+                Component.onCompleted: if (root.visible) requestPaint()
             }
 
             // Progress arc (blue gradient)
@@ -118,7 +121,7 @@ Rectangle {
                     ctx.stroke();
                 }
 
-                Component.onCompleted: requestPaint()
+                Component.onCompleted: if (root.visible) requestPaint()
 
                 // Throttle repaint to avoid excessive updates
                 property int lastRamUsage: 0
@@ -128,7 +131,9 @@ Rectangle {
                         // Only repaint if change is significant (>= 1%)
                         if (Math.abs(systemInfo.ramUsage - progressArc.lastRamUsage) >= 1) {
                             progressArc.lastRamUsage = systemInfo.ramUsage
-                            progressArc.requestPaint()
+                            if (root.visible) {
+                                progressArc.requestPaint()
+                            }
                         }
                     }
                 }
@@ -140,12 +145,13 @@ Rectangle {
                 spacing: 2
 
                 // Memory icon
-                Text {
+                Image {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: "💾"
-                    font.pixelSize: 20
-                    font.family: "DejaVu Sans"
-                    renderType: Text.NativeRendering 
+                    source: "qrc:/assets/icons/memory.png"
+                    width: 20
+                    height: 20
+                    sourceSize: Qt.size(20, 20)
+                    smooth: false
                 }
 
                 // Percentage Text
@@ -175,7 +181,7 @@ Rectangle {
             font.family: "DejaVu Sans"
             font.pixelSize: 10
             font.bold: true
-            color: "#B0B8C8"  // Secondary text color
+            color: Theme.secondaryText
             renderType: Text.NativeRendering
             antialiasing: false
             font.hintingPreference: Font.PreferFullHinting
@@ -191,10 +197,10 @@ Rectangle {
             }
             width: 304
             height: 30
-            color: "#1E2539"  // Card background
-            radius: 8
+            color: Theme.cardBackground
+            radius: Theme.cardRadius
             border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.1)
+            border.color: Theme.borderSubtle
 
             Column {
                 anchors {
@@ -213,6 +219,8 @@ Rectangle {
                     renderType: Text.NativeRendering
                     antialiasing: false
                     font.hintingPreference: Font.PreferFullHinting
+                    width: 272
+                    elide: Text.ElideRight
                 }
 
                 // Free and cache text
@@ -227,6 +235,8 @@ Rectangle {
                         renderType: Text.NativeRendering
                         antialiasing: false
                         font.hintingPreference: Font.PreferFullHinting
+                        width: 120
+                        elide: Text.ElideRight
                     }
 
                     Text {
@@ -237,6 +247,8 @@ Rectangle {
                         renderType: Text.NativeRendering
                         antialiasing: false
                         font.hintingPreference: Font.PreferFullHinting
+                        width: 120
+                        elide: Text.ElideRight
                     }
                 }
             }

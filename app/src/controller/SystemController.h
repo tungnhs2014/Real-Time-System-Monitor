@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
 #ifndef SYSTEMCONTROLLER_H
 #define SYSTEMCONTROLLER_H
 
@@ -10,25 +13,18 @@ class SettingsManager;
 class SystemMetricsService;
 struct SystemMetricsSnapshot;
 
+
 /**
- * @class SystemController
- * @brief QML-facing facade for system metrics, settings, logs, and actions.
+ * @brief QML-facing facade exposed as `systemInfo`.
  *
- * SystemController is exposed to QML as `systemInfo`. It owns the metric
- * service, settings manager, and refresh timer through Qt parent ownership, and
- * all methods run on the GUI thread. Linux data collection is delegated to
- * SystemMetricsService, while persistence and system commands are delegated to
- * SettingsManager. Missing platform data is surfaced as fallback values rather
- * than exceptions so the 320x240 UI can keep rendering.
- *
- * This class is intentionally still broad to preserve the existing QML binding
- * contract during the incremental refactor.
+ * Owns the refresh timer, metrics service, and settings manager through Qt
+ * parent ownership. It runs on the GUI thread and preserves QML fallback values
+ * when Linux runtime sources are unavailable.
  */
 class SystemController : public QObject
 {
     Q_OBJECT
 
-    // CPU metrics
     Q_PROPERTY(int cpuUsage READ cpuUsage NOTIFY cpuUsageChanged)
     Q_PROPERTY(int cpuTemp READ cpuTemp NOTIFY cpuTempChanged)
     Q_PROPERTY(QString cpuClock READ cpuClock NOTIFY cpuClockChanged)
@@ -36,37 +32,31 @@ class SystemController : public QObject
     Q_PROPERTY(QVariantList tempHistory READ tempHistory NOTIFY tempHistoryChanged)
     Q_PROPERTY(QString loadAverage READ loadAverage NOTIFY loadAverageChanged)
 
-    // GPU summary metrics
     Q_PROPERTY(int gpuUsage READ gpuUsage NOTIFY gpuUsageChanged)
     Q_PROPERTY(int gpuTemp READ gpuTemp NOTIFY gpuTempChanged)
     Q_PROPERTY(int gpuMemUsage READ gpuMemUsage NOTIFY gpuMemUsageChanged)
 
-    // Memory metrics
     Q_PROPERTY(int ramUsage READ ramUsage NOTIFY ramUsageChanged)
     Q_PROPERTY(QString ramUsed READ ramUsed NOTIFY ramUsedChanged)
     Q_PROPERTY(QString ramFree READ ramFree NOTIFY ramFreeChanged)
     Q_PROPERTY(QString ramCache READ ramCache NOTIFY ramCacheChanged)
     Q_PROPERTY(int ramTotal READ ramTotal NOTIFY ramTotalChanged)
 
-    // Storage, swap, and block I/O metrics
     Q_PROPERTY(int hddUsage READ hddUsage NOTIFY hddUsageChanged)
     Q_PROPERTY(int hddTemp READ hddTemp NOTIFY hddTempChanged)
     Q_PROPERTY(QString hddTotal READ hddTotal NOTIFY hddTotalChanged)
     Q_PROPERTY(QString hddUsed READ hddUsed NOTIFY hddUsedChanged)
     Q_PROPERTY(QString hddFree READ hddFree NOTIFY hddFreeChanged)
 
-    // Swap
     Q_PROPERTY(int swapUsage READ swapUsage NOTIFY swapUsageChanged)
     Q_PROPERTY(QString swapTotal READ swapTotal NOTIFY swapTotalChanged)
     Q_PROPERTY(QString swapUsed READ swapUsed NOTIFY swapUsedChanged)
     Q_PROPERTY(QString swapFree READ swapFree NOTIFY swapFreeChanged)
 
-    // I/O
     Q_PROPERTY(QString ioRead READ ioRead NOTIFY ioReadChanged)
     Q_PROPERTY(QString ioWrite READ ioWrite NOTIFY ioWriteChanged)
     Q_PROPERTY(QVariantList ioHistory READ ioHistory NOTIFY ioHistoryChanged)
 
-    // Network metrics
     Q_PROPERTY(QString networkInterface READ networkInterface NOTIFY networkInterfaceChanged)
     Q_PROPERTY(QString ipAddress READ ipAddress NOTIFY ipAddressChanged)
     Q_PROPERTY(QString macAddress READ macAddress NOTIFY macAddressChanged)
@@ -77,14 +67,12 @@ class SystemController : public QObject
     Q_PROPERTY(QVariantList netUpHistory READ netUpHistory NOTIFY netUpHistoryChanged)
     Q_PROPERTY(QVariantList netDownHistory READ netDownHistory NOTIFY netDownHistoryChanged)
 
-    // System information
     Q_PROPERTY(QString hostname READ hostname CONSTANT)
     Q_PROPERTY(QString osVersion READ osVersion CONSTANT)
     Q_PROPERTY(QString kernelVersion READ kernelVersion CONSTANT)
     Q_PROPERTY(QString uptime READ uptime NOTIFY uptimeChanged)
     Q_PROPERTY(QString systemTime READ systemTime NOTIFY systemTimeChanged)
 
-    // Persisted settings
     Q_PROPERTY(int updateInterval READ updateInterval WRITE setUpdateInterval NOTIFY updateIntervalChanged)
     Q_PROPERTY(bool darkMode READ darkMode WRITE setDarkMode NOTIFY darkModeChanged)
     Q_PROPERTY(bool soundAlert READ soundAlert WRITE setSoundAlert NOTIFY soundAlertChanged)
@@ -93,7 +81,6 @@ class SystemController : public QObject
     Q_PROPERTY(int cpuCritThreshold READ cpuCritThreshold WRITE setCpuCritThreshold NOTIFY cpuCritThresholdChanged)
     Q_PROPERTY(int ramWarnThreshold READ ramWarnThreshold WRITE setRamWarnThreshold NOTIFY ramWarnThresholdChanged)
 
-    // Runtime logs
     Q_PROPERTY(QVariantList systemLogs READ systemLogs NOTIFY systemLogsChanged)
 
 public:
@@ -107,19 +94,16 @@ public:
     QVariantList tempHistory() const { return m_tempHistory; }
     QString loadAverage() const { return m_loadAverage; }
 
-    // GPU Getters
     int gpuUsage() const { return m_gpuUsage; }
     int gpuTemp() const { return m_gpuTemp; }
     int gpuMemUsage() const { return m_gpuMemUsage; }
 
-    // RAM Getters
     int ramUsage() const { return m_ramUsage; }
     QString ramUsed() const { return m_ramUsed; }
     QString ramFree() const { return m_ramFree; }
     QString ramCache() const { return m_ramCache; }
     int ramTotal() const { return m_ramTotal; }
 
-    // Storage Getters
     int hddUsage() const { return m_hddUsage; }
     int hddTemp() const { return m_hddTemp; }
     QString hddTotal() const { return m_hddTotal; }
@@ -133,7 +117,6 @@ public:
     QString ioWrite() const { return m_ioWrite; }
     QVariantList ioHistory() const { return m_ioHistory; }
 
-    // Network Getters
     QString networkInterface() const { return m_networkInterface; }
     QString ipAddress() const { return m_ipAddress; }
     QString macAddress() const { return m_macAddress; }
@@ -144,14 +127,12 @@ public:
     QVariantList netUpHistory() const { return m_netUpHistory; }
     QVariantList netDownHistory() const { return m_netDownHistory; }
 
-    // System Getters
     QString hostname() const { return m_hostname; }
     QString osVersion() const { return m_osVersion; }
     QString kernelVersion() const { return m_kernelVersion; }
     QString uptime() const { return m_uptime; }
     QString systemTime() const { return m_systemTime; }
 
-    // Settings Getters
     int updateInterval() const { return m_updateInterval; }
     bool darkMode() const { return m_darkMode; }
     bool soundAlert() const { return m_soundAlert; }
@@ -159,10 +140,8 @@ public:
     int cpuCritThreshold() const { return m_cpuCritThreshold; }
     int ramWarnThreshold() const { return m_ramWarnThreshold; }
 
-    // Logs
     QVariantList systemLogs() const { return m_systemLogs; }
 
-    // Settings Setters
     void setUpdateInterval(int interval);
     void setDarkMode(bool enabled);
     void setSoundAlert(bool enabled);
@@ -180,7 +159,6 @@ public:
     Q_INVOKABLE void addLog(const QString& level, const QString& message);
 
 signals:
-    // CPU Signals
     void cpuUsageChanged();
     void cpuTempChanged();
     void cpuClockChanged();
@@ -188,19 +166,16 @@ signals:
     void tempHistoryChanged();
     void loadAverageChanged();
 
-    // GPU Signals
     void gpuUsageChanged();
     void gpuTempChanged();
     void gpuMemUsageChanged();
 
-    // RAM Signals
     void ramUsageChanged();
     void ramUsedChanged();
     void ramFreeChanged();
     void ramCacheChanged();
     void ramTotalChanged();
 
-    // Storage Signals
     void hddUsageChanged();
     void hddTempChanged();
     void hddTotalChanged();
@@ -214,7 +189,6 @@ signals:
     void ioWriteChanged();
     void ioHistoryChanged();
 
-    // Network Signals
     void networkInterfaceChanged();
     void ipAddressChanged();
     void macAddressChanged();
@@ -225,11 +199,9 @@ signals:
     void netUpHistoryChanged();
     void netDownHistoryChanged();
 
-    // System Signals
     void uptimeChanged();
     void systemTimeChanged();
 
-    // Settings
     void updateIntervalChanged();
     void darkModeChanged();
     void soundAlertChanged();
@@ -237,7 +209,6 @@ signals:
     void cpuCritThresholdChanged();
     void ramWarnThresholdChanged();
 
-    // Logs
     void systemLogsChanged();
 
 private slots:
@@ -255,7 +226,6 @@ private:
 
     QTimer* m_updateTimer;
 
-    // CPU data
     int m_cpuUsage;
     int m_cpuTemp;
     QString m_cpuClock;
@@ -263,19 +233,16 @@ private:
     QVariantList m_tempHistory;
     QString m_loadAverage;
 
-    // GPU data
     int m_gpuUsage;
     int m_gpuTemp;
     int m_gpuMemUsage;
 
-    // RAM data
     int m_ramUsage;
     QString m_ramUsed;
     QString m_ramFree;
     QString m_ramCache;
     int m_ramTotal;
 
-    // Storage data
     int m_hddUsage;
     int m_hddTemp;
     QString m_hddTotal;
@@ -289,7 +256,6 @@ private:
     QString m_ioWrite;
     QVariantList m_ioHistory;
 
-    // Network data
     QString m_networkInterface;
     QString m_ipAddress;
     QString m_macAddress;
@@ -300,22 +266,21 @@ private:
     QVariantList m_netUpHistory;
     QVariantList m_netDownHistory;
 
-    // System data
     QString m_hostname;
     QString m_osVersion;
     QString m_kernelVersion;
     QString m_uptime;
     QString m_systemTime;
 
-    // Settings
     int m_updateInterval;
     bool m_darkMode;
     bool m_soundAlert;
     int m_cpuWarnThreshold;
     int m_cpuCritThreshold;
     int m_ramWarnThreshold;
+    int m_lastCpuWarningLevel;
+    int m_lastRamWarningLevel;
 
-    // Logs
     QVariantList m_systemLogs;
 };
 

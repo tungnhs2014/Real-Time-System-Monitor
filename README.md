@@ -1,43 +1,26 @@
-# System Monitor
+# Real-Time System Monitor
 
-System Monitor is an embedded Qt/QML monitoring application for Raspberry Pi-class hardware using an ILI9341 SPI display and XPT2046 touch input.
+An embedded Qt 6/QML system monitor for a 320x240 ILI9341 SPI framebuffer and
+XPT2046 touch controller on Raspberry Pi 3 64-bit.
 
-The repository contains:
-- a Qt/QML userspace monitoring application
-- a Yocto BSP layer for display, touch, and kernel-side integration
-- a product-side Yocto layer for app and image packaging
-- compact source-of-truth documentation under `docs/`
-
-## Why This Repository Exists
-- provide a dedicated on-device system monitor UI
-- keep app code, BSP integration, and design documentation in one versioned place
-- support both desktop-oriented validation and Raspberry Pi bring-up
+The repository is intentionally a manual bring-up project. Yocto builds a
+lightweight `core-image-base`; the overlay, custom kernel modules, framebuffer
+diagnostic, and cross-built app are deployed separately through SCP.
 
 ## Repository Map
-- `app/`: userspace application
-- `yocto/meta-rpi-ili9341-bsp/`: active BSP integration layer
-- `yocto/meta-system-monitor/`: product-side application and image packaging
-- `docs/`: product, architecture, BSP/Yocto, build/test, troubleshooting, diagrams
 
-## Start Here
-- reading map: [docs/00-start-here.md](docs/00-start-here.md)
-- product scope: [docs/01-product.md](docs/01-product.md)
-- runtime architecture: [docs/02-architecture.md](docs/02-architecture.md)
-- build, run, and test: [docs/04-build-run-test.md](docs/04-build-run-test.md)
+- `app/`: Qt 6 C++/QML application exposed through the `systemInfo` facade.
+- `yocto/meta-rpi-ili9341-bsp/`: device tree, display/touch modules, and
+  framebuffer diagnostic recipes.
+- `yocto/config/rpi3-ili9341-bringup/`: copyable `local.conf` and optional SDK
+  configuration; layers are registered with `bitbake-layers`.
+- `docs/`: source-derived architecture, BSP, deployment, and verification
+  guidance.
 
-## Quick Start
-- understand the repository first through [docs/00-start-here.md](docs/00-start-here.md)
-- inspect the app under `app/`
-- inspect BSP integration under `yocto/meta-rpi-ili9341-bsp/`
-- inspect product packaging under `yocto/meta-system-monitor/`
+## Validation Status
 
-## Build Entry Points
-- repository root wrapper: `CMakeLists.txt`
-- application build file: `app/CMakeLists.txt`
-- Yocto BSP layer: `yocto/meta-rpi-ili9341-bsp/`
-- Yocto product layer: `yocto/meta-system-monitor/`
+Source-level checks can validate the Qt app, device tree syntax, and driver
+style. Color output, touch behavior, Wi-Fi persistence, and end-to-end app
+interaction remain board-only evidence.
 
-## Documentation Rule
-README is intentionally concise.
-
-Detailed product scope, architecture, diagrams, build/test notes, and troubleshooting live in `docs/`.
+Start with [docs/00-start-here.md](docs/00-start-here.md).

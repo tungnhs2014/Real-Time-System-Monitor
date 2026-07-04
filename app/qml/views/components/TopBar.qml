@@ -1,50 +1,61 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
 import QtQuick 2.15
+import "../theme"
 
 Rectangle {
     id: root
-    width: 320
-    height: 30
-    color: "#0A0E14"
+    width: Theme.screenWidth
+    height: Theme.headerHeight
+    color: Theme.dashboardBackground
 
     property string currentTime: "03:01"
     property string hostname: "raspberrypi"
+    property double lastSettingsPressMs: 0
 
     // ADD: Settings signal
     signal settingsClicked()
+
+    function requestSettings() {
+        var now = Date.now()
+        if (now - lastSettingsPressMs < 150) {
+            return
+        }
+        lastSettingsPressMs = now
+        settingsClicked()
+    }
 
     // Time display
     Text {
         x: 16
         y: 11
+        width: 58
         text: root.currentTime
-        font.family: "DejaVu Sans"
+        font.family: Theme.fontFamily
         font.pixelSize: 14
         font.bold: true
         font.hintingPreference: Font.PreferFullHinting
-        color: "#FFFFFF"
+        color: Theme.primaryText
         renderType: Text.NativeRendering
         antialiasing: false
-    }
-
-    // Timer to update time
-    Timer {
-        interval: 1000
-        running: true
-        repeat: true
-        onTriggered: root.currentTime = Qt.formatTime(new Date(), "hh:mm")
+        elide: Text.ElideRight
     }
 
     // Hostname display
     Text {
         anchors.centerIn: parent
+        width: 150
         text: root.hostname
-        font.family: "DejaVu Sans"
+        font.family: Theme.fontFamily
         font.pixelSize: 11
         font.bold: true
         font.hintingPreference: Font.PreferFullHinting
-        color: "#B0B8C8"
+        color: Theme.secondaryText
         renderType: Text.NativeRendering
         antialiasing: false
+        horizontalAlignment: Text.AlignHCenter
+        elide: Text.ElideRight
     }
 
     Item {
@@ -54,8 +65,8 @@ Rectangle {
             rightMargin: 8
             verticalCenter: parent.verticalCenter
         }
-        width: 44   
-        height: 44
+        width: Theme.touchTarget
+        height: Theme.touchTarget
 
         Image {
             id: settingsIcon
@@ -71,10 +82,13 @@ Rectangle {
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
-            onClicked: root.settingsClicked()  // Emit signal
-            onPressed: settingsIcon.opacity = 0.6
+            preventStealing: true
+            onPressed: {
+                settingsIcon.opacity = 0.6
+            }
             onReleased: settingsIcon.opacity = 1.0
             onCanceled: settingsIcon.opacity = 1.0
+            onClicked: root.requestSettings()
         }
     }
 }

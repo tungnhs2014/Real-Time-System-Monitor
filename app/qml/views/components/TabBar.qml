@@ -1,27 +1,40 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
 import QtQuick 2.15
+import "../theme"
 
 Rectangle {
     id: root
 
-    // PROPERTIES
-    width: 320
-    height: 44
-    color: "#1E2539"
+    width: Theme.screenWidth
+    height: root.barHeight
+    color: Theme.cardBackground
 
     property var tabs: ["Tab 1", "Tab 2", "Tab 3", "Tab 4"]
     property int currentIndex: 0
+    property int barHeight: Theme.touchTarget
+    property int fontPixelSize: 9
+    property int indicatorHeight: 3
+    property double lastTabPressMs: 0
 
-    // Colors
-    property color activeColor:  "#2196F3"      // Blue
-    property color inactiveColor: "#B0B8C8"    // Gray
-    property color backgroundColor: "#1E2539"
-    property color indicatorColor: "#2196F3"   // Blue underline
+    property color activeColor: Theme.accentBlue
+    property color inactiveColor: Theme.secondaryText
+    property color backgroundColor: Theme.cardBackground
+    property color indicatorColor: Theme.accentBlue
 
-    // SIGNALS
     signal tabClicked(int index)
 
-    // BACKGROUND
-    // Top border
+    function requestTab(index) {
+        var now = Date.now()
+        if (now - lastTabPressMs < 150) {
+            return
+        }
+        lastTabPressMs = now
+        currentIndex = index
+        tabClicked(index)
+    }
+
     Rectangle {
         anchors {
             left: parent.left
@@ -32,7 +45,6 @@ Rectangle {
         color: Qt.rgba(1, 1, 1, 0.1)
     }
 
-    // Bottom border
     Rectangle {
         anchors {
             left: parent.left
@@ -43,7 +55,6 @@ Rectangle {
         color: Qt.rgba(1, 1, 1, 0.1)
     }
 
-    // TAB ITEMS
     Row {
         id: tabRow
         anchors.fill: parent
@@ -56,41 +67,36 @@ Rectangle {
                 width: root.width / root.tabs.length
                 height: root.height
 
-                // Tab Text
                 Text {
                     anchors.centerIn: parent
                     text: modelData
-                    font.family: "DejaVu Sans"
-                    font.pixelSize: 9
+                    width: parent.width - 4
+                    font.family: Theme.fontFamily
+                    font.pixelSize: root.fontPixelSize
                     font.bold: index === root.currentIndex
                     color: index === root.currentIndex ? root.activeColor : root.inactiveColor
 
-                    // RGB565 optimizations
                     renderType: Text.NativeRendering
                     antialiasing: false
                     font.hintingPreference: Font.PreferFullHinting
+                    horizontalAlignment: Text.AlignHCenter
+                    elide: Text.ElideRight
 
-                    // Smooth color transition
                     Behavior on color {
-                        ColorAnimation { duration: 150 }
+                        ColorAnimation { duration: uiAnimationDuration }
                     }
                 }
 
-                // Click area
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
 
-                    onClicked: {
-                        root.currentIndex = index
-                        root.tabClicked(index)
-                    }
+                    onPressed: root.requestTab(index)
                 }
             }
         }
     }
 
-    // ACTIVE INDICATOR
     Rectangle {
         id: activeIndicator
         anchors {
@@ -98,16 +104,14 @@ Rectangle {
             bottomMargin: 1
         }
         width: root.width / root.tabs.length
-        height: 3
+        height: root.indicatorHeight
         color: root.indicatorColor
 
-        // Position based on currentIndex
         x: (root.width / root.tabs.length) * root.currentIndex
 
-        // Smooth animation when currentIndex changes
         Behavior on x {
             NumberAnimation {
-                duration: 200
+                duration: uiAnimationDuration
                 easing.type: Easing.OutCubic
             }
         }

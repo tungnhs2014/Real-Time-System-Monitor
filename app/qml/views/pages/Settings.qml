@@ -1,18 +1,23 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
 import QtQuick 2.15
 import "../components"
+import "../theme"
+
+pragma ComponentBehavior: Bound
 
 Rectangle {
     id: root
 
     // PROPERTIES
-    width: 320
-    height: 240
-    color: "#0F1419"
+    width: Theme.screenWidth
+    height: Theme.screenHeight
+    color: Theme.pageBackground
 
     // SIGNALS FOR NAVIGATION
     signal backRequested()
     signal settingsRequested()
-    signal navigationRequested(int index)
 
     // HEADER
     DetailHeader {
@@ -37,6 +42,9 @@ Rectangle {
         }
         tabs: ["System", "Monitor", "Warning", "Logs"]
         currentIndex: 0
+        barHeight: 35
+        fontPixelSize: 8
+        indicatorHeight: 2
 
         onTabClicked: function(index) {
             if (QML_DEBUG_ENABLED) console.log("Tab switched to:", tabs[index])
@@ -50,20 +58,22 @@ Rectangle {
             top: tabBar.bottom
             left: parent.left
             right: parent.right
-            bottom: tabBar.currentIndex === 0 ? bottomNav.top : saveButton.top
+            bottom: (tabBar.currentIndex === 1 || tabBar.currentIndex === 2) ? saveButton.top : parent.bottom
             margins: 8
         }
 
         // TAB 1: SYSTEM INFO
         Flickable {
             anchors.fill: parent
-            contentHeight: systemColumn.height
+            contentHeight: Math.max(height, systemColumn.implicitHeight)
+            boundsBehavior: Flickable.StopAtBounds
+            interactive: contentHeight > height
             clip: true
             visible: tabBar.currentIndex === 0
 
             Column {
                 id: systemColumn
-                width: parent.parent.width
+                width: parent.width
                 spacing: 10
 
                 InfoRow { label: "Hostname:"; value: systemInfo.hostname }
@@ -80,6 +90,8 @@ Rectangle {
                     height: 28
                     text: "Reboot"
                     buttonColor: "#FF9800"
+                    preventInputStealing: true
+                    enabled: !rebootDialog.visible && !shutdownDialog.visible
                     onClicked: rebootDialog.show()
                 }
 
@@ -89,6 +101,8 @@ Rectangle {
                     height: 28
                     text: "Shutdown"
                     buttonColor: "#F44336"
+                    preventInputStealing: true
+                    enabled: !rebootDialog.visible && !shutdownDialog.visible
                     onClicked: shutdownDialog.show()
                 }
             }
@@ -162,14 +176,19 @@ Rectangle {
         // TAB 3: WARNING THRESHOLDS
         Flickable {
             anchors.fill: parent
-            contentHeight: warningColumn.height
+            contentWidth: width
+            contentHeight: Math.max(height, warningColumn.implicitHeight)
+            boundsBehavior: Flickable.StopAtBounds
+            interactive: visible && contentHeight > height
+            maximumFlickVelocity: 700
+            flickDeceleration: 1800
             clip: true
             visible: tabBar.currentIndex === 2
 
             Column {
                 id: warningColumn
-                width: parent.parent.width
-                spacing: 12
+                width: parent.width
+                spacing: 5
 
                 Text {
                     text: "CPU Thresholds"
@@ -182,7 +201,8 @@ Rectangle {
 
                 Row {
                     width: parent.width
-                    spacing: 10
+                    height: 38
+                    spacing: 8
 
                     Text {
                         text: "Warning:"
@@ -190,13 +210,13 @@ Rectangle {
                         font.pixelSize: 9
                         color: "#FFFFFF"
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 70
+                        width: 68
                         renderType: Text.NativeRendering
                     }
 
                     SpinBox {
                         value: systemInfo.cpuWarnThreshold
-                        minValue: 50
+                        minValue: 0
                         maxValue: 95
                         step: 5
                         suffix: "%"
@@ -208,7 +228,8 @@ Rectangle {
                 // CPU critical
                 Row {
                     width: parent.width
-                    spacing: 10
+                    height: 38
+                    spacing: 8
 
                     Text {
                         text: "Critical:"
@@ -216,13 +237,13 @@ Rectangle {
                         font.pixelSize: 9
                         color: "#FFFFFF"
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 70
+                        width: 68
                         renderType: Text.NativeRendering
                     }
 
                     SpinBox {
                         value: systemInfo.cpuCritThreshold
-                        minValue: 60
+                        minValue: 0
                         maxValue: 100
                         step: 5
                         suffix: "%"
@@ -231,7 +252,7 @@ Rectangle {
                     }
                 }
 
-                Item { height: 8 }
+                Item { height: 2 }
 
                 Text {
                     text: "RAM Thresholds"
@@ -244,7 +265,8 @@ Rectangle {
 
                 Row {
                     width: parent.width
-                    spacing: 10
+                    height: 38
+                    spacing: 8
 
                     Text {
                         text: "Warning:"
@@ -252,13 +274,13 @@ Rectangle {
                         font.pixelSize: 9
                         color: "#FFFFFF"
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 70
+                        width: 68
                         renderType: Text.NativeRendering
                     }
 
                     SpinBox {
                         value: systemInfo.ramWarnThreshold
-                        minValue: 50
+                        minValue: 0
                         maxValue: 95
                         step: 5
                         suffix: "%"
@@ -277,23 +299,29 @@ Rectangle {
 
             Text {
                 text: "Recent System Logs"
-                font.family: "DejaVu Sans"
+                font.family: Theme.fontFamily
                 font.pixelSize: 10
                 font.bold: true
-                color: "#FFFFFF"
+                color: Theme.primaryText
                 renderType: Text.NativeRendering
             }
 
             ListView {
+                id: logsList
                 width: parent.width
-                height: parent.height - 20
+                height: Math.max(0, parent.height - 18)
                 clip: true
-                model: systemInfo.systemLogs
+                boundsBehavior: Flickable.StopAtBounds
+                model: tabBar.currentIndex === 3 ? systemInfo.systemLogs : []
 
                 delegate: Rectangle {
-                    width: ListView.view.width
-                    height: 18
-                    color: index % 2 === 0 ? "#1E2539" : "#0F1419"
+                    id: logDelegate
+                    required property int index
+                    required property var modelData
+
+                    width: logsList.width
+                    height: 24
+                    color: logDelegate.index % 2 === 0 ? "#20283A" : "#111722"
 
                     Row {
                         anchors.fill: parent
@@ -301,21 +329,23 @@ Rectangle {
                         spacing: 6
 
                         Text {
-                            text: modelData.time
+                            width: 56
+                            text: logDelegate.modelData.time
                             font.family: "DejaVu Sans Mono"
-                            font.pixelSize: 7
-                            color: "#B0B8C8"
+                            font.pixelSize: 8
+                            color: "#F2F6FF"
                             anchors.verticalCenter: parent.verticalCenter
                             renderType: Text.NativeRendering
+                            elide: Text.ElideRight
                         }
 
                         Rectangle {
-                            width: 32
-                            height: 12
+                            width: 34
+                            height: 14
                             radius: 2
                             anchors.verticalCenter: parent.verticalCenter
                             color: {
-                                switch(modelData.level) {
+                                switch(logDelegate.modelData.level) {
                                     case "ERROR": return "#F44336"
                                     case "WARN": return "#FF9800"
                                     case "INFO": return "#4CAF50"
@@ -325,9 +355,9 @@ Rectangle {
 
                             Text {
                                 anchors.centerIn: parent
-                                text: modelData.level
+                                text: logDelegate.modelData.level
                                 font.family: "DejaVu Sans"
-                                font.pixelSize: 6
+                                font.pixelSize: 7
                                 font.bold: true
                                 color: "#FFFFFF"
                                 renderType: Text.NativeRendering
@@ -335,14 +365,14 @@ Rectangle {
                         }
 
                         Text {
-                            text: modelData.message
+                            text: logDelegate.modelData.message
                             font.family: "DejaVu Sans"
-                            font.pixelSize: 7
+                            font.pixelSize: 9
                             color: "#FFFFFF"
                             anchors.verticalCenter: parent.verticalCenter
                             renderType: Text.NativeRendering
                             elide: Text.ElideRight
-                            width: 180
+                            width: Math.max(80, logDelegate.width - 114)
                         }
                     }
                 }
@@ -350,19 +380,19 @@ Rectangle {
         }
     }
 
-    // SAVE BUTTON
     Button {
         id: saveButton
         anchors {
             horizontalCenter: parent.horizontalCenter
-            bottom: bottomNav.top
+            bottom: parent.bottom
             bottomMargin: 8
         }
         width: 304
         height: 24
         text: "Save Changes"
-        buttonColor: "#4CAF50"  // Green
-        visible: tabBar.currentIndex !== 0  // Hide on System tab (index 0)
+        buttonColor: "#4CAF50"
+        triggerOnPress: true
+        visible: tabBar.currentIndex === 1 || tabBar.currentIndex === 2
 
         onClicked: {
             if (QML_DEBUG_ENABLED) console.log("Saving settings...")
@@ -372,15 +402,12 @@ Rectangle {
             if (QML_DEBUG_ENABLED) console.log("CPU crit:", systemInfo.cpuCritThreshold)
             if (QML_DEBUG_ENABLED) console.log("RAM warn:", systemInfo.ramWarnThreshold)
 
-            // Save to backend
             systemInfo.saveSettings()
 
-            // Show success feedback (could add toast/snackbar)
             if (QML_DEBUG_ENABLED) console.log("Settings saved successfully!")
         }
     }
 
-    // CONFIRMATION DIALOGS
     ConfirmDialog {
         id: rebootDialog
         title: "Reboot System"
@@ -399,42 +426,31 @@ Rectangle {
         onAccepted: systemInfo.shutdown()
     }
 
-    // BOTTOM NAVIGATION
-    BottomNav {
-        id: bottomNav
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        currentIndex: -1  // No tab selected in settings
-
-        // Forward navigation signal to Main.qml
-        onNavigationRequested: function(index) {
-            root.navigationRequested(index)
-        }
-    }
-
-    // HELPER COMPONENTS
     component InfoRow: Row {
+        id: infoRow
         property string label: ""
         property string value: ""
         spacing: 8
 
         Text {
-            text: label
-            font.family: "DejaVu Sans"
+            text: infoRow.label
+            font.family: Theme.fontFamily
             font.pixelSize: 9
-            color: "#B0B8C8"
-            width: 100
+            color: Theme.secondaryText
+            width: 76
             renderType: Text.NativeRendering
+            elide: Text.ElideRight
         }
 
         Text {
-            text: value
-            font.family: "DejaVu Sans"
+            text: infoRow.value
+            font.family: Theme.fontFamily
             font.pixelSize: 9
             font.bold: true
-            color: "#FFFFFF"
+            color: Theme.primaryText
             renderType: Text.NativeRendering
+            width: 210
+            elide: Text.ElideRight
         }
     }
 }

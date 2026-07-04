@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-2026 TungNHS
+
 import QtQuick 2.15
 
 Rectangle {
@@ -144,7 +147,7 @@ Rectangle {
     // SMOOTH BORDER TRANSITION
     Behavior on border.color {
         ColorAnimation {
-            duration: 150
+            duration: uiAnimationDuration
         }
     }
 }

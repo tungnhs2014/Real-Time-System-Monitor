@@ -3,3 +3,8 @@
 /build-*/
 /out/
 private-docs/
+/yocto/build/
+/yocto/downloads/
+/yocto/sstate-cache/
+/yocto/tmp/
+/yocto/deploy/

@@ -1,11 +1,11 @@
-# Yocto
+# Yocto BSP
 
-This directory groups the Yocto layers related to the System Monitor product.
+This directory contains only the versioned Raspberry Pi BSP layer. It does not
+contain Poky, build output, downloads, shared-state cache, an app package, or
+a release image recipe.
 
-## Layers
-- `meta-rpi-ili9341-bsp/`: active BSP layer for display, touch, and kernel-side integration
-- `meta-system-monitor/`: reserved product layer for packaging the main application
+`meta-rpi-ili9341-bsp/` provides the ILI9341/XPT2046 overlay, display and touch
+modules, kernel support, and the framebuffer diagnostic recipe. The copyable
+bring-up configuration is under `config/rpi3-ili9341-bringup/`.
 
-## Reading Order
-1. `meta-rpi-ili9341-bsp/README.md`
-2. `../docs/03-bsp-and-integration/yocto-layer.md`
+Use the manual workflow in [../docs/04-yocto-build-deploy.md](../docs/04-yocto-build-deploy.md).
